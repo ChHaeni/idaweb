@@ -10,7 +10,9 @@ meteoswiss_collections <- function() {
     bu <- 'https://data.geo.admin.ch/api/stac/v1/'
     out <- content(GET(paste0(bu, 'collections?provider=meteoswiss')))
     if (is.null(out$code)) {
-        structure(out, class = c('ms_collections', class(out)))
+        ids <- sapply(out$collections, '[[', 'id')
+        attr(ids, 'collections') <- out$collections
+        structure(ids, class = 'ms_collections')
     } else {
         out
     }
@@ -18,24 +20,26 @@ meteoswiss_collections <- function() {
 
 # print method for collections
 print.ms_collections <- function(x, ...) {
-    # get ids & titles
-    ids <- sapply(x$collections, '[[', 'id')
-    titles <- sapply(x$collections, '[[', 'title')
+    # get titles
+    titles <- sapply(attr(x, 'collections'), '[[', 'title')
     mt <- max(nchar(titles)) + grepl('[^a-zA-Z0-9:)( -]', titles) * 2
-    cat('~~~~~~\n')
-    cat('Open Data - MeteoSwiss\n')
-    cat('----------------------\n')
-    cat('available collections:\n')
-    for (i in seq_along(ids)) {
+    cat('~~~~~~~~~~~~~~~~~~~~~~\n')
+    cat('Open Data - MeteoSwiss\n\n')
+    cat(nl <- length(x), 'collections available:\n')
+    cat(paste(rep('-', nchar(as.character(nl))), collapse = ''),
+        '-----------------------\n', sep = '')
+    for (i in seq_len(nl)) {
         cat(sprintf(
                 paste0('%2i: %-', mt[i], 's -> %s\n')
-                , i, titles[i], ids[i]))
+                , i, titles[i], x[i]))
     }
-    cat('~~~~~~\n')
+    cat('~~~~~~~~~~~~~~~~~~~~~~\n')
     invisible()
 }
 
 # test
 cl <- meteoswiss_collections()
 cl
+cl[20]
+
 
