@@ -42,6 +42,53 @@ cl <- meteoswiss_collections()
 cl
 cl[20]
 
+# get info about parameters and stations for single collections
+# -> only ogd data without forecasting, nbcn*, obs or phenology
+download_meta_data <- function(id = NULL) {
+    # check id input
+    if (!(length(id) == 1 && is.character(id))) {
+        stop('argument "id" is not a valid single collection id!')
+    }
+    # get stem
+    id_stem <- sub('ch.meteoschweiz.', '', id, fixed = TRUE)
+    # base url to REST API
+    bu <- 'https://data.geo.admin.ch/'
+    # download info
+    datainventory <- read.table(paste0(bu, id, '/', id_stem, 
+        '_meta_datainventory.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1')
+    parameters <- read.table(paste0(bu, id, '/', id_stem, 
+        '_meta_parameters.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1')
+    stations <- read.table(paste0(bu, id, '/', id_stem, 
+        '_meta_stations.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1',
+        fill = TRUE, comment.char = '', quote = ''
+    )
+    # names(parameters)
+    # head(parameters)
+    # names(stations)
+    # head(stations[grep('_url_', names(stations), fixed = TRUE, invert = TRUE, value = TRUE)])
+    list(
+        datainventory = datainventory,
+        parameters = parameters,
+        stations = stations
+    )
+}
+
+xx <- download_meta_data('ch.meteoschweiz.ogd-smn')
+xx <- download_meta_data(cl[21])
+head(xx[[1]])
+head(xx[[2]])
+head(xx[[3]])
+
+xx <- lapply(cl[14:23], \(x) try(download_meta_data(x)))
+cl[14:23]
+lengths(xx)
+
+yy <- xx[lengths(xx) == 3]
+
+sapply(yy, \(x) names(x[[1]]))
+sapply(yy, \(x) names(x[[2]]))
+sapply(yy, \(x) names(x[[3]]))
+# -> all meta data have same structure
 
 # fetch assets of a single collection
 get_assets <- function(id = NULL) {
