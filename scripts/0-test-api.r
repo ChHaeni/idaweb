@@ -49,29 +49,54 @@ download_meta_data <- function(id = NULL) {
     if (!(length(id) == 1 && is.character(id))) {
         stop('argument "id" is not a valid single collection id!')
     }
+    # download info
+    list(
+        datainventory = get_datainventory(id),
+        parameters = get_parameters(id),
+        stations = get_stations(id)
+    )
+}
+
+get_datainventory <- function(id) {
     # get stem
     id_stem <- sub('ch.meteoschweiz.', '', id, fixed = TRUE)
     # base url to REST API
     bu <- 'https://data.geo.admin.ch/'
-    # download info
-    datainventory <- read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_datainventory.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1')
-    parameters <- read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_parameters.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1')
-    stations <- read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_stations.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1',
-        fill = TRUE, comment.char = '', quote = ''
-    )
-    # names(parameters)
-    # head(parameters)
-    # names(stations)
-    # head(stations[grep('_url_', names(stations), fixed = TRUE, invert = TRUE, value = TRUE)])
-    list(
-        datainventory = datainventory,
-        parameters = parameters,
-        stations = stations
+    read.table(paste0(bu, id, '/', id_stem, 
+        '_meta_datainventory.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1',
+        fill = TRUE, comment.char = '', quote = '"'
     )
 }
+get_parameters <- function(id) {
+    # get stem
+    id_stem <- sub('ch.meteoschweiz.', '', id, fixed = TRUE)
+    # base url to REST API
+    bu <- 'https://data.geo.admin.ch/'
+    read.table(paste0(bu, id, '/', id_stem, 
+        '_meta_parameters.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1',
+        fill = TRUE, comment.char = '', quote = '"'
+    )
+}
+get_stations <- function(id) {
+    # get stem
+    id_stem <- sub('ch.meteoschweiz.', '', id, fixed = TRUE)
+    # base url to REST API
+    bu <- 'https://data.geo.admin.ch/'
+    read.table(paste0(bu, id, '/', id_stem, 
+        '_meta_stations.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1',
+        fill = TRUE, comment.char = '', quote = '"'
+    )
+}
+
+get_datainventory(cl[21])
+x1 <- lapply(cl[14:23], get_datainventory)
+x2 <- lapply(cl[14:23], get_parameters)
+x3 <- lapply(cl[14:23], get_stations)
+
+# names(parameters)
+# head(parameters)
+# names(stations)
+# head(stations[grep('_url_', names(stations), fixed = TRUE, invert = TRUE, value = TRUE)])
 
 xx <- download_meta_data('ch.meteoschweiz.ogd-smn')
 xx <- download_meta_data(cl[21])
