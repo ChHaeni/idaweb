@@ -63,7 +63,7 @@ get_datainventory <- function(id) {
     # base url to REST API
     bu <- 'https://data.geo.admin.ch/'
     read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_datainventory.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1',
+        '_meta_datainventory.csv'), sep = ';', header = TRUE, fileEncoding = 'Windows-1252',
         fill = TRUE, comment.char = '', quote = '"'
     )
 }
@@ -73,7 +73,7 @@ get_parameters <- function(id) {
     # base url to REST API
     bu <- 'https://data.geo.admin.ch/'
     read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_parameters.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1',
+        '_meta_parameters.csv'), sep = ';', header = TRUE, fileEncoding = 'Windows-1252',
         fill = TRUE, comment.char = '', quote = '"'
     )
 }
@@ -83,80 +83,102 @@ get_stations <- function(id) {
     # base url to REST API
     bu <- 'https://data.geo.admin.ch/'
     read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_stations.csv'), sep = ';', header = TRUE, fileEncoding = 'latin1',
+        '_meta_stations.csv'), sep = ';', header = TRUE, fileEncoding = 'Windows-1252',
         fill = TRUE, comment.char = '', quote = '"'
     )
 }
+# get_info <- function(id) {
+#     datainventory <- get_datainventory(id)
+#     parameters <- get_parameters(id)
+#     stations <- get_stations(id)
+#     head(datainventory)
+#     str(stations)
+#     s_cols <- c('station_abr', 'station_name', 'station_canton', 'station_type_en',
+#         'station_data_since',
+#     head(stations[, 
+#     browser()
+# }
+# get_info(cl[20])
 
 get_datainventory(cl[21])
 x1 <- lapply(cl[14:23], get_datainventory)
 x2 <- lapply(cl[14:23], get_parameters)
 x3 <- lapply(cl[14:23], get_stations)
 
-# names(parameters)
-# head(parameters)
-# names(stations)
-# head(stations[grep('_url_', names(stations), fixed = TRUE, invert = TRUE, value = TRUE)])
 
-xx <- download_meta_data('ch.meteoschweiz.ogd-smn')
-xx <- download_meta_data(cl[21])
-head(xx[[1]])
-head(xx[[2]])
-head(xx[[3]])
 
-xx <- lapply(cl[14:23], \(x) try(download_meta_data(x)))
-cl[14:23]
-lengths(xx)
+search_meteo <- function(
+    ll_wgs84 = c(5.96, 45.82),
+    ur_wgs84 = c(10.49, 47.81),
+    # ll_lv95 = NULL, ur_lv95 = NULL,
+    from = NULL,
+    to = NULL,
+    ids = NULL,
+    collections = NULL
+) {
 
-yy <- xx[lengths(xx) == 3]
-
-sapply(yy, \(x) names(x[[1]]))
-sapply(yy, \(x) names(x[[2]]))
-sapply(yy, \(x) names(x[[3]]))
-# -> all meta data have same structure
-
-# fetch assets of a single collection
-get_assets <- function(id = NULL) {
-    # check id input
-    if (!(length(id) == 1 && is.character(id))) {
-        stop('argument "id" is not a valid single collection id!')
-    }
-    # base url to REST API
-    bu <- 'https://data.geo.admin.ch/api/stac/v1/'
-    out <- content(GET(paste0(bu, 'collections/', id, '/assets')))
-    if (is.null(out$code)) {
-        sapply(out$assets, '[[', 'id')
-    } else {
-        out
-    }
 }
 
-yy <- get_assets('ch.meteoschweiz.ogd-smn')
-lapply(cl, get_assets)
+# base url to REST API / GET search
+valid_collections <- paste(
+    # 'ch.meteoschweiz.ogd-nbcn',
+    # 'ch.meteoschweiz.ogd-nbcn-precip',
+    # 'ch.meteoschweiz.ogd-nime',
+    # 'ch.meteoschweiz.ogd-obs',
+    # 'ch.meteoschweiz.ogd-phenology',
+    # 'ch.meteoschweiz.ogd-pollen',
+    'ch.meteoschweiz.ogd-smn',
+    'ch.meteoschweiz.ogd-smn-precip',
+    'ch.meteoschweiz.ogd-smn-tower',
+    'ch.meteoschweiz.ogd-tot',
+    sep = ','
+)
+bu <- paste0('https://data.geo.admin.ch/api/stac/v1/search?collections=', 
+    valid_collections, '&')
+# t1 <- content(GET(paste0(bu, 'bbox=6.96,45.82,9,46.81')))
+bern <- c(46.989090, 7.463082)
+ll <- c(46.979143, 7.445185)
+ur <- c(46.997198, 7.482103)
+bbox <- paste(c(rev(ll), rev(ur)), collapse = ',')
+t1 <- content(GET(paste0(bu, 'bbox=', bbox, '&datetime=2024-01-01T00:00:00Z/..')))
+# names(t1)
+length(t1$features)
+# NOTE: always limit of 100!!
+names(t1$features[[1]]$assets)
 
-str(yy$assets)
+str(t1)
 
-# fetch list of items for a single collection 
-get_items <- function(id = NULL) {
-    # check id input
-    if (!(length(id) == 1 && is.character(id))) {
-        stop('argument "id" is not a valid single collection id!')
-    }
-    # base url to REST API
-    bu <- 'https://data.geo.admin.ch/api/stac/v1/'
-    out <- content(GET(paste0(bu, 'collections/', id, '/items')))
-    if (is.null(out$code)) {
-        ids <- sapply(out$features, '[[', 'id')
-        nms <- lapply(out$features, \(x) names(x$assets))
-        names(nms) <- ids
-        nms
-    } else {
-        out
-    }
+# https://opendatadocs.meteoswiss.ch/general/download#update-frequency
+# historical    (meas. start until 31.12 last year): once a year        (m, d, h, t)
+# recent        (1.1. current year until yesterday): daily at 12UTC     (m, d, h, t)
+# now           (yesterday 12UTC to now):            every 10 min       (h, t)
+# no type
+
+# m: monthly, d: daily, h: hourly, t: 10-min
+
+# for granularity t and h the time stamp defines the end of the measurement interval and
+# for higher granularities (d, m and y) the time stamp defines the beginning of the interval!
+
+# Missing values (e.g. due to instrument failure) are empty fields. 
+# Empty columns are used when a parameter is not measured at all at a certain station.
+
+xnms <- names(t1$features[[1]]$assets)
+
+xx <- t1$features[[1]]$assets[[xnms[1]]]
+
+tf <- tempfile(fileext = xnms[1])
+
+options(setNames(list(tf), xnms[1]))
+
+
+if (!file.exists(getOption(xnms[1]))) {
+    download.file(url = xx$href, destfile = getOption(xnms[1]))
 }
 
-meteoswiss_collections()
+yy <- read.table(getOption(xnms[1]), sep = ';', header = TRUE, fileEncoding = 'Windows-1252')
+head(yy)
 
-xx <- get_items('ch.meteoschweiz.ogd-smn')
-get_items(cl[1])
+head(x3[[1]][, 1:20])
 
+# NOTE: searching stations in a single collection might be more efficient 
+#   via meta data meta_stations
