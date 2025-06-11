@@ -88,75 +88,37 @@ supported_collections <- function() {
     invisible(out)
 }
 
-##  • helper functions ====================
-
-# helper function to download data
-# and get path to local file
-dl_data <- function(url) {
-    # get data name
-    data_name <- basename(url)
-    # check if data is already available locally
-    local_file <- getOption(data_name)
-    if (is.null(local_file)) {
-        # temporary file path
-        local_file <- tempfile(fileext = data_name)
-        # download file
-        dl_code <- download.file(url = url, destfile = local_file)
-        if (dl_code != 0L) {
-            stop('Download of file "', url, '" failed with exit code ', dl_code, 
-                call. = FALSE)
-        }
-        # add path to options
-        options(setNames(list(local_file), data_name))
-    }
-    # return path
-    invisible(local_file)
-}
-
-# check if supported
-check_supported_id <- function(id) {
-    if (length(id) == 1L && is.character(id)) {
-        id %in% supported_collections()
-    } else if (length(id) > 1L) {
-        sapply(id, check_supported_id)
-    } else {
-        FALSE
-    }
-}
-
-
-## testing ----------------------------------------
-
-# test
-cl <- meteoswiss_collections()
-cl
-cl[20]
-
-# get info about parameters and stations for single collections
-# -> only ogd data without forecasting, nbcn*, obs or phenology
-download_meta_data <- function(id = NULL) {
-    # check id input
-    if (!(length(id) == 1 && is.character(id))) {
-        stop('argument "id" is not a valid single collection id!')
-    }
-    # download info
-    list(
-        datainventory = get_datainventory(id),
-        parameters = get_parameters(id),
-        stations = get_stations(id)
-    )
-}
-
+# get meta data
 get_datainventory <- function(id) {
-    # get stem
-    id_stem <- sub('ch.meteoschweiz.', '', id, fixed = TRUE)
-    # base url to REST API
-    bu <- 'https://data.geo.admin.ch/'
-    read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_datainventory.csv'), sep = ';', header = TRUE, fileEncoding = 'Windows-1252',
-        fill = TRUE, comment.char = '', quote = '"'
-    )
+    if (length(id) == 1L) {
+        # check supported id
+        if (i_supp <- check_supported(id)) {
+            # get collection info
+            id_coll <- attr(i_supp, 'collection')
+            browser()
+            # get file url
+            file_name <- grep('datainventory', names(id_coll$assets), value = TRUE, 
+                fixed = TRUE)
+            file_url <- id_coll$assets[[file_name]]$href
+            last_updated <- id_coll$assets[[file_name]]$updated
+            file_checksum <- id_coll$assets[[file_name]][['file:checksum']]
+            # datainventory file url
+            bu <- 'https://data.geo.admin.ch/'
+            read.table(paste0(bu, id, '/', id_stem, 
+                '_meta_datainventory.csv'), sep = ';', header = TRUE, fileEncoding = 'Windows-1252',
+                fill = TRUE, comment.char = '', quote = '"'
+            )
+        } else {
+            return(invisible(NULL))
+        }
+    } else {
+        # get data
+        out <- lapply(id, get_datainventory)
+        # remove invalid
+        out[!sapply(out, is.null)]
+    }
 }
+
 get_parameters <- function(id) {
     # get stem
     id_stem <- sub('ch.meteoschweiz.', '', id, fixed = TRUE)
@@ -189,6 +151,71 @@ get_stations <- function(id) {
 #     browser()
 # }
 # get_info(cl[20])
+
+##  • helper functions ====================
+
+# helper function to download data
+# and get path to local file
+dl_data <- function(url) {
+    # get data name
+    data_name <- basename(url)
+    # check if data is already available locally
+    local_file <- getOption(data_name)
+    if (is.null(local_file)) {
+        # temporary file path
+        local_file <- tempfile(fileext = data_name)
+        # download file
+        dl_code <- download.file(url = url, destfile = local_file)
+        if (dl_code != 0L) {
+            stop('Download of file "', url, '" failed with exit code ', dl_code, 
+                call. = FALSE)
+        }
+        # add path to options
+        options(setNames(list(local_file), data_name))
+    }
+    # return path
+    invisible(local_file)
+}
+
+# check if supported
+check_supported <- function(id) {
+    if (length(id) == 1L && is.character(id)) {
+        sc <- supported_collections()
+        i <- which(id %in% sc)
+        structure(length(i) != 0L, collection = attr(sc, 'collections')[[i]])
+    } else if (length(id) > 1L) {
+        out <- lapply(id, check_supported)
+        structure(
+            unlist(out),
+            collection = lapply(out, attr, 'collection')
+        )
+    } else {
+        FALSE
+    }
+}
+
+
+## testing ----------------------------------------
+
+# test
+cl <- meteoswiss_collections()
+cl
+cl[20]
+
+# get info about parameters and stations for single collections
+# -> only ogd data without forecasting, nbcn*, obs or phenology
+download_meta_data <- function(id = NULL) {
+    # check id input
+    if (!(length(id) == 1 && is.character(id))) {
+        stop('argument "id" is not a valid single collection id!')
+    }
+    # download info
+    list(
+        datainventory = get_datainventory(id),
+        parameters = get_parameters(id),
+        stations = get_stations(id)
+    )
+}
 
 get_datainventory(cl[21])
 x1 <- lapply(cl[14:23], get_datainventory)
