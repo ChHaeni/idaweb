@@ -114,6 +114,15 @@ dl_data <- function(url) {
 }
 
 # check if supported
+check_supported_id <- function(id) {
+    if (length(id) == 1L && is.character(id)) {
+        id %in% supported_collections()
+    } else if (length(id) > 1L) {
+        sapply(id, check_supported_id)
+    } else {
+        FALSE
+    }
+}
 
 
 ## testing ----------------------------------------
