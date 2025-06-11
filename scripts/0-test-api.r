@@ -1,16 +1,47 @@
 
-library(httr)
+
+
+## NOTES ----------------------------------------
 
 # REST API docu
 # https://data.geo.admin.ch/api/stac/static/spec/v1/api.html#tag/Data
 
-# fetch all available MeteoSwiss Open Data collections
-meteoswiss_collections <- function() {
+# only collections from meteoswiss
+# only ids containing ogd (because of meta data & data format)
+
+# in general:
+# - fetch data info
+# - meta data included in package -> check if update needed
+# - function to update specific or all meta data (if necessary)
+# - download data only if not available in options
+# - one function to get data (incl. options check)
+
+## functions ----------------------------------------
+
+##  • header ====================
+
+library(httr)
+
+# add helper function to construct url
+ms_url <- function(...) {
+    paste0('https://data.geo.admin.ch/', ...)
+}
+
+# fetch available MeteoSwiss Open Data
+# run to show all supported collections: collections(TRUE)
+collections <- function(supported_only = FALSE) {
     # base url to REST API
-    bu <- 'https://data.geo.admin.ch/api/stac/v1/'
-    out <- content(GET(paste0(bu, 'collections?provider=meteoswiss')))
+    get_url <- ms_url('api/stac/v1/collections?provider=meteoswiss')
+    # get info
+    out <- content(GET(get_url))
     if (is.null(out$code)) {
         ids <- sapply(out$collections, '[[', 'id')
+        if (supported_only) {
+            # filter for collections supported by this package
+            i_supported <- grep('ogd-forecasting(*SKIP)(*FAIL)|ogd-.*', ids, perl = TRUE)
+            out$collections <- out$collections[i_supported]
+            ids <- ids[i_supported]
+        }
         attr(ids, 'collections') <- out$collections
         structure(ids, class = 'ms_collections')
     } else {
@@ -36,6 +67,38 @@ print.ms_collections <- function(x, ...) {
     cat('~~~~~~~~~~~~~~~~~~~~~~\n')
     invisible()
 }
+
+# function to get info on specific data set(s) from collection
+# e.g.: info(collections())
+# x -> either ms_collections object or a valid id
+info <- function(x, i = NULL) {
+}
+
+# helper function to download data
+# and get path to local file
+dl_data <- function(url) {
+    # get data name
+    data_name <- basename(url)
+    # check if data is already available locally
+    local_file <- getOption(data_name)
+    if (is.null(local_file)) {
+        # temporary file path
+        local_file <- tempfile(fileext = data_name)
+        # download file
+        dl_code <- download.file(url = url, destfile = local_file)
+        if (dl_code != 0L) {
+            stop('Download of file "', url, '" failed with exit code ', dl_code, 
+                call. = FALSE)
+        }
+        # add path to options
+        options(setNames(list(local_file), data_name))
+    }
+    # return path
+    invisible(local_file)
+}
+
+
+## testing ----------------------------------------
 
 # test
 cl <- meteoswiss_collections()
@@ -182,3 +245,11 @@ head(x3[[1]][, 1:20])
 
 # NOTE: searching stations in a single collection might be more efficient 
 #   via meta data meta_stations
+
+# -> for package => include meta data as data & check updated
+bu <- 'https://data.geo.admin.ch/api/stac/v1/'
+out <- content(GET(paste0(bu, 'collections/ch.meteoschweiz.ogd-smn')))
+out$assets
+sapply(out$assets, '[[', 'updated')
+
+# -> function update_meta_data
