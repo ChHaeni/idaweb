@@ -27,6 +27,8 @@ ms_url <- function(...) {
     paste0('https://data.geo.admin.ch/', ...)
 }
 
+##  • main functions ====================
+
 # fetch available MeteoSwiss Open Data
 # run to show all supported collections: collections(TRUE)
 collections <- function(supported_only = FALSE) {
@@ -74,6 +76,20 @@ print.ms_collections <- function(x, ...) {
 info <- function(x, i = NULL) {
 }
 
+# get supported collections
+supported_collections <- function() {
+    out <- getOption('ms_supported_collections')
+    if (is.null(out)) {
+        # get collections
+        out <- collections(TRUE)
+        # assign to options
+        options(setNames(list(out), 'ms_supported_collections'))
+    }
+    invisible(out)
+}
+
+##  • helper functions ====================
+
 # helper function to download data
 # and get path to local file
 dl_data <- function(url) {
@@ -96,6 +112,8 @@ dl_data <- function(url) {
     # return path
     invisible(local_file)
 }
+
+# check if supported
 
 
 ## testing ----------------------------------------
