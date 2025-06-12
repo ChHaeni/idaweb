@@ -154,6 +154,12 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
 #     )}, attr(xx, 'collections'), z1, z2, z3, SIMPLIFY = FALSE)
 # names(metadata) <- xx
 # save(metadata, file = 'data/metadata.rda')
+# sapply(metadata, \(x) sapply(x$assets, '[[', 'file:checksum'))
+# get_metadata(xx[1])
+
+# TODO:
+#   search functions
+#   search by: time range, location range, parameters (fuzzy search)
 
 
 ##  • helper functions ====================
@@ -174,10 +180,17 @@ dl_data <- function(url, checksum = NULL) {
             stop('Download of file "', url, '" failed with exit code ', dl_code, 
                 call. = FALSE)
         }
-        # # check checksum if available
-        # if (!is.null(checksum)) {
-        #     browser()
-        # }
+        # check checksum if available
+        if (!is.null(checksum)) {
+            if (grep('^1220', checksum)) {
+                stop('dubious checksum start "1220" has been changed or removed -> FIX ME')
+            }
+            # get checksum
+            if (sub('^1220', '', checksum) != 
+                as.character(openssl::sha256(file(local_file)))) {
+                stop('checksum does not match provided "file:checksum"!')
+            }
+        }
         # add path to options
         options(setNames(list(local_file), data_name))
     }
