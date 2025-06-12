@@ -89,74 +89,78 @@ supported_collections <- function() {
 }
 
 # get meta data
-get_datainventory <- function(id) {
+get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')) {
+    type <- match.arg(type)
     if (length(id) == 1L) {
         # check supported id
         if (i_supp <- check_supported(id)) {
             # get collection info
             id_coll <- attr(i_supp, 'collection')
-            browser()
-            # get file url
-            file_name <- grep('datainventory', names(id_coll$assets), value = TRUE, 
+            # get file update
+            file_name <- grep(type, names(id_coll$assets), value = TRUE, 
                 fixed = TRUE)
-            file_url <- id_coll$assets[[file_name]]$href
-            last_updated <- id_coll$assets[[file_name]]$updated
-            file_checksum <- id_coll$assets[[file_name]][['file:checksum']]
-            # datainventory file url
-            bu <- 'https://data.geo.admin.ch/'
-            read.table(paste0(bu, id, '/', id_stem, 
-                '_meta_datainventory.csv'), sep = ';', header = TRUE, fileEncoding = 'Windows-1252',
-                fill = TRUE, comment.char = '', quote = '"'
+            last_updated <- lubridate::fast_strptime(
+                id_coll$assets[[file_name]]$updated,
+                format = "%Y-%m-%dT%H:%M:%OSZ", lt = FALSE
             )
+            # check if package data is up-to-date
+            # if (last_updated > idaweb:::metadata[[id]]$assets[[file_name]]$updated) {
+            # replace me when package
+            load('data/metadata.rda')
+            if (last_updated > metadata[[id]]$assets[[file_name]]$updated) {
+                # update data...
+                # get url & checksum
+                file_url <- id_coll$assets[[file_name]]$href
+                file_checksum <- id_coll$assets[[file_name]][['file:checksum']]
+                if (!(basename(file_url) %in% names(.Options))) {
+                    # TODO: add message about github issue (only first time if local
+                    #           file does not exist yet)
+                    # cat()
+                    warning('TODO here!')
+                    # ?
+                }
+                # download file
+                local_file <- dl_data(file_url, file_checksum)
+                return(
+                    read.table(local_file, sep = ';', header = TRUE, fill = TRUE,
+                        fileEncoding = 'Windows-1252', comment.char = '', quote = '"'
+                    )
+                )
+            }
+            # return(idaweb:::metadata[[id]][[file_name]])
+            # replace me when package
+            return(metadata[[id]][[file_name]])
         } else {
             return(invisible(NULL))
         }
     } else {
         # get data
-        out <- lapply(id, get_datainventory)
+        out <- lapply(id, get_metadata, type = type)
         # remove invalid
-        out[!sapply(out, is.null)]
+        return(out[!sapply(out, is.null)])
     }
 }
 
-get_parameters <- function(id) {
-    # get stem
-    id_stem <- sub('ch.meteoschweiz.', '', id, fixed = TRUE)
-    # base url to REST API
-    bu <- 'https://data.geo.admin.ch/'
-    read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_parameters.csv'), sep = ';', header = TRUE, fileEncoding = 'Windows-1252',
-        fill = TRUE, comment.char = '', quote = '"'
-    )
-}
-get_stations <- function(id) {
-    # get stem
-    id_stem <- sub('ch.meteoschweiz.', '', id, fixed = TRUE)
-    # base url to REST API
-    bu <- 'https://data.geo.admin.ch/'
-    read.table(paste0(bu, id, '/', id_stem, 
-        '_meta_stations.csv'), sep = ';', header = TRUE, fileEncoding = 'Windows-1252',
-        fill = TRUE, comment.char = '', quote = '"'
-    )
-}
-# get_info <- function(id) {
-#     datainventory <- get_datainventory(id)
-#     parameters <- get_parameters(id)
-#     stations <- get_stations(id)
-#     head(datainventory)
-#     str(stations)
-#     s_cols <- c('station_abr', 'station_name', 'station_canton', 'station_type_en',
-#         'station_data_since',
-#     head(stations[, 
-#     browser()
-# }
-# get_info(cl[20])
+# # save metadata
+# z1 <- get_metadata(xx, 'data')
+# z2 <- get_metadata(xx, 'stat')
+# z3 <- get_metadata(xx, 'par')
+# metadata <- mapply(\(col, inv, stat, para) {
+#     list(
+#         assets = col$assets,
+#         datainventory = inv,
+#         stations = stat,
+#         parameters = para
+#     )}, attr(xx, 'collections'), z1, z2, z3, SIMPLIFY = FALSE)
+# names(metadata) <- xx
+# save(metadata, file = 'data/metadata.rda')
+
 
 ##  • helper functions ====================
 
 # helper function to download data
 # and get path to local file
-dl_data <- function(url) {
+dl_data <- function(url, checksum = NULL) {
     # get data name
     data_name <- basename(url)
     # check if data is already available locally
@@ -170,6 +174,10 @@ dl_data <- function(url) {
             stop('Download of file "', url, '" failed with exit code ', dl_code, 
                 call. = FALSE)
         }
+        # # check checksum if available
+        # if (!is.null(checksum)) {
+        #     browser()
+        # }
         # add path to options
         options(setNames(list(local_file), data_name))
     }
