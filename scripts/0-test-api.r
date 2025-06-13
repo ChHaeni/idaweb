@@ -157,9 +157,49 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
 # sapply(metadata, \(x) sapply(x$assets, '[[', 'file:checksum'))
 # get_metadata(xx[1])
 
+## hier weiter!!!
 # TODO:
 #   search functions
 #   search by: time range, location range, parameters (fuzzy search)
+
+load('data/metadata.rda')
+
+get_tzone <- function(x) {
+    out <- attr(x, 'tzone')
+    if (is.null(out)) {
+        if (inherits(x, 'POSIXct')) {
+            out <- ''
+        } else {
+            out <- 'UTC'
+        }
+    }
+    out
+}
+search_by_datetime <- function(from, to = NULL, tz = get_tzone(from), previous = NULL) {
+    seps <- c('to', '/', '::', ' - ')
+    orders <- c("%Y", "%d.%m.%Y", "%d.%m.%y", "%d.%m.%Y %H:%M", "%d.%m.%y %H:%M",
+        "%d.%m.%Y %H:%M:%S", "%d.%m.%y %H:%M:%S", "%Y-%m-%d", "%y-%m-%d", 
+        "%Y-%m-%d %H:%M", "%y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%y-%m-%d %H:%M:%S")
+    if (is.null(to)) {
+        browser()
+        # check time range(s)
+        split_chars <- sapply(from, \(x) seps[which(lengths(lapply(seps, grep, x, fixed = TRUE)) == 1)])
+        # loop over split_chars and check length: 0 -> parse_date_time3, 1 -> parse_timerange, >1 -> error message
+
+        ibts::parse_timerange
+        ibts::parse_date_time3
+    } else {
+    }
+}
+
+search_by_datetime(c('01.01.2018 to 05.02.2018', '13.08.2020', '07.02.2024/08.03.2025'))
+
+search_by_location
+search_by_parameter
+
+# add option to provide previous results for further subsetting
+# add function to bind different results together
+# add function to get data from results
 
 
 ##  • helper functions ====================
