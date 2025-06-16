@@ -176,20 +176,38 @@ get_tzone <- function(x) {
     out
 }
 search_by_datetime <- function(from, to = NULL, tz = get_tzone(from), previous = NULL) {
-    seps <- c('to', '/', '::', ' - ')
-    orders <- c("%Y", "%d.%m.%Y", "%d.%m.%y", "%d.%m.%Y %H:%M", "%d.%m.%y %H:%M",
+    if (is.null(to)) {
+        seps <- c('to', '/', '::', ' - ')
+        # split any time ranges
+        from_list <- strsplit(from, 
+            split = paste0(' ?', paste(seps, collapse = ' ?| ?'), ' ?'))
+        # parse datetimes to POSIXct
+        dt_list <- lapply(from_list, fa_st, tz = tz)
+    } else {
+        # parse from
+        from <- switch(class(from)
+            , character = fa_st(from, tz = tz)
+            , POSIXlt = as.POSIXct(from)
+            , POSIXct = from
+            , stop('argument "from" should be of class "character" or "POSIXt"!')
+        )
+        # parse to
+        to <- switch(class(to)
+            , character = fa_st(to, tz = tz)
+            , POSIXlt = as.POSIXct(to)
+            , POSIXct = to
+            , stop('argument "to" should be of class "character" or "POSIXt"!')
+        )
+        # parse datetimes to POSIXct
+        dt_list <- mapply('c', from, to, SIMPLIFY = FALSE)
+    }
+}
+
+fa_st <- function(x, tz) {
+    formats <- c("%Y", "%d.%m.%Y", "%d.%m.%y", "%d.%m.%Y %H:%M", "%d.%m.%y %H:%M",
         "%d.%m.%Y %H:%M:%S", "%d.%m.%y %H:%M:%S", "%Y-%m-%d", "%y-%m-%d", 
         "%Y-%m-%d %H:%M", "%y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%y-%m-%d %H:%M:%S")
-    if (is.null(to)) {
-        browser()
-        # check time range(s)
-        split_chars <- sapply(from, \(x) seps[which(lengths(lapply(seps, grep, x, fixed = TRUE)) == 1)])
-        # loop over split_chars and check length: 0 -> parse_date_time3, 1 -> parse_timerange, >1 -> error message
-
-        ibts::parse_timerange
-        ibts::parse_date_time3
-    } else {
-    }
+    lubridate::fast_strptime(x, format = formats, tz = tz, lt = FALSE)
 }
 
 search_by_datetime(c('01.01.2018 to 05.02.2018', '13.08.2020', '07.02.2024/08.03.2025'))
@@ -201,6 +219,7 @@ search_by_parameter
 # add function to bind different results together
 # add function to get data from results
 
+# TODO: add option to provide path to downloaded files
 
 ##  • helper functions ====================
 
