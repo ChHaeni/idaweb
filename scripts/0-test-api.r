@@ -241,7 +241,7 @@ dl_data <- function(url, checksum = NULL) {
         }
         # check checksum if available
         if (!is.null(checksum)) {
-            if (grep('^1220', checksum)) {
+            if (!grepl('^1220', checksum)) {
                 stop('dubious checksum start "1220" has been changed or removed -> FIX ME')
             }
             # get checksum
