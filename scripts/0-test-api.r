@@ -262,7 +262,11 @@ check_supported <- function(id) {
     if (length(id) == 1L && is.character(id)) {
         sc <- supported_collections()
         i <- which(id %in% sc)
-        structure(length(i) != 0L, collection = attr(sc, 'collections')[[i]])
+        if (length(i) == 0L) {
+            structure(FALSE, collection = list())
+        } else {
+            structure(TRUE, collection = attr(sc, 'collections')[[i]])
+        }
     } else if (length(id) > 1L) {
         out <- lapply(id, check_supported)
         structure(
