@@ -193,33 +193,96 @@ get_tzone <- function(x) {
     }
     out
 }
-search_by_datetime <- function(from, to = NULL, tz = get_tzone(from), previous = NULL) {
-    if (is.null(to)) {
-        seps <- c('to', '/', '::', ' - ')
-        # split any time ranges
-        from_list <- strsplit(from, 
-            split = paste0(' ?', paste(seps, collapse = ' ?| ?'), ' ?'))
-        # parse datetimes to POSIXct
-        dt_list <- lapply(from_list, fa_st, tz = tz)
+search_by_datetime <- function(from, to, tz = get_tzone(from), previous_search = NULL) {
+    if (!missing(from) && length(from) != 1L) stop('argument "from" must have length 1!')
+    if (!missing(to) && length(to) != 1L) stop('argument "to" must have length 1!')
+    if (missing(to)) {
+        # check from
+        switch(class(from)[1]
+            , character = {
+                seps <- c('to', '/', '::', ' - ')
+                # split any time ranges
+                from_to <- trimws(unlist(strsplit(from, 
+                    split = paste0(' ?', paste(seps, collapse = ' ?| ?'), ' ?'))))
+                # parse datetimes to POSIXct
+                if (from_to[1] == '') {
+                    from <- as.POSIXct(-Inf)
+                } else {
+                    from <- fa_st(from_to[1], tz = tz)
+                }
+                if (length(from_to) == 1L) {
+                    to <- as.POSIXct(Inf)
+                } else {
+                    to <- fa_st(from_to[2], tz = tz)
+                }
+            }
+            , POSIXlt = {
+                from <- as.POSIXct(from)
+                to <- as.POSIXct(Inf)
+            }
+            , POSIXct = {
+                to <- as.POSIXct(Inf)
+            }
+            , stop('argument "from" should be of class "character" or "POSIXt"!')
+        )
+    } else if (missing(from)) {
+        # parse to
+        to <- switch(class(to)[1]
+            , character = fa_st(trimws(to), tz = tz)
+            , POSIXlt = as.POSIXct(to)
+            , POSIXct = to
+            , stop('argument "to" should be of class "character" or "POSIXt"!')
+        )
+        from <- as.POSIXct(-Inf)
     } else {
         # parse from
-        from <- switch(class(from)
-            , character = fa_st(from, tz = tz)
+        from <- switch(class(from)[1]
+            , character = fa_st(trimws(from), tz = tz)
             , POSIXlt = as.POSIXct(from)
             , POSIXct = from
             , stop('argument "from" should be of class "character" or "POSIXt"!')
         )
         # parse to
-        to <- switch(class(to)
-            , character = fa_st(to, tz = tz)
+        to <- switch(class(to)[1]
+            , character = fa_st(trimws(to), tz = tz)
             , POSIXlt = as.POSIXct(to)
             , POSIXct = to
             , stop('argument "to" should be of class "character" or "POSIXt"!')
         )
-        # parse datetimes to POSIXct
-        dt_list <- mapply('c', from, to, SIMPLIFY = FALSE)
     }
+    # check if to > from
+    if (to <= from) {
+        stop('argument "to" must indicate a time which occurs later than "from"')
+    }
+    # idaweb:::metadata
+    # change argument to ms_search = idaweb:::metadata
+    # select datainventory/station/parameters
+    out <- sapply(previous_search, \(x) {
+        # check from
+        i_from <- is.na(x$datainventory$data_till) | from <= x$datainventory$data_till
+        # check to
+        i_to <- i_from & x$datainventory$data_since <= to
+        # return subset incl from/to
+        sub_inv <- x$datainventory[i_to, ]
+        # get stations
+        sub_stats <- x$stations[x$stations$station_abbr %in% sub_inv$station_abbr, ]
+        # get parameters
+        sub_paras <- x$parameters[x$parameters$parameter_shortname %in% 
+            sub_inv$parameter_shortname, ]
+        list(
+            datainventory = sub_inv,
+            stations = sub_stats,
+            parameters = sub_paras
+        )
+    }, simplify = FALSE)
+    structure(out, class = 'ms_search', from = from, to = to)
 }
+
+search_by_datetime('01.01.2018 to 05.02.2018', previous_search = metadata[10])
+search_by_datetime('13.08.2020')
+search_by_datetime('07.02.2024/08.03.2025')
+search_by_datetime(to = '13.08.2020')
+search_by_datetime(from = '01.01.2018', to = '13.08.2020')
 
 fa_st <- function(x, tz) {
     formats <- c("%Y", "%d.%m.%Y", "%d.%m.%y", "%d.%m.%Y %H:%M", "%d.%m.%y %H:%M",
@@ -228,7 +291,6 @@ fa_st <- function(x, tz) {
     lubridate::fast_strptime(x, format = formats, tz = tz, lt = FALSE)
 }
 
-search_by_datetime(c('01.01.2018 to 05.02.2018', '13.08.2020', '07.02.2024/08.03.2025'))
 
 search_by_location
 search_by_parameter
