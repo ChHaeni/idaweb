@@ -121,11 +121,24 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                 }
                 # download file
                 local_file <- dl_data(file_url, file_checksum)
-                return(
-                    read.table(local_file, sep = ';', header = TRUE, fill = TRUE,
+                out <- read.table(local_file, sep = ';', header = TRUE, fill = TRUE,
                         fileEncoding = 'Windows-1252', comment.char = '', quote = '"'
                     )
+                # convert datetimes
+                switch(type,
+                    datainventory = {
+                        out$data_since <- lubridate::fast_strptime(out$data_since, 
+                            format = '%d.%m.%Y %H:%M', tz = 'UTC', lt = FALSE)
+                        out$data_till <- lubridate::fast_strptime(out$data_till, 
+                            format = '%d.%m.%Y %H:%M', tz = 'UTC', lt = FALSE)
+                    },
+                    stations = {
+                        out$station_data_since <- lubridate::fast_strptime(
+                            out$station_data_since, format = '%d.%m.%Y', 
+                            tz = 'UTC', lt = FALSE)
+                    }
                 )
+                return(out)
             }
             # return(idaweb:::metadata[[id]][[file_name]])
             # replace me when package
@@ -141,7 +154,8 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
     }
 }
 
-# # save metadata
+# # # save metadata
+# xx <- supported_collections()
 # z1 <- get_metadata(xx, 'data')
 # z2 <- get_metadata(xx, 'stat')
 # z3 <- get_metadata(xx, 'par')
