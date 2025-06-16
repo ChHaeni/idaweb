@@ -129,8 +129,12 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                     datainventory = {
                         out$data_since <- lubridate::fast_strptime(out$data_since, 
                             format = '%d.%m.%Y %H:%M', tz = 'UTC', lt = FALSE)
-                        out$data_till <- lubridate::fast_strptime(out$data_till, 
-                            format = '%d.%m.%Y %H:%M', tz = 'UTC', lt = FALSE)
+                        if (is.logical(out$data_till)) {
+                            out$data_till <- as.POSIXct(out$data_till)
+                        } else {
+                            out$data_till <- lubridate::fast_strptime(out$data_till, 
+                                format = '%d.%m.%Y %H:%M', tz = 'UTC', lt = FALSE)
+                        }
                     },
                     stations = {
                         out$station_data_since <- lubridate::fast_strptime(
