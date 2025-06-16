@@ -275,7 +275,7 @@ dl_data <- function(url, checksum = NULL) {
 check_supported <- function(id) {
     if (length(id) == 1L && is.character(id)) {
         sc <- supported_collections()
-        i <- which(id %in% sc)
+        i <- which(sc %in% id)
         if (length(i) == 0L) {
             structure(FALSE, collection = list())
         } else {
