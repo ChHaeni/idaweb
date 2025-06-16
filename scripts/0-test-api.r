@@ -281,73 +281,33 @@ check_supported <- function(id) {
 
 ## testing ----------------------------------------
 
-# test
-cl <- meteoswiss_collections()
-cl
-cl[20]
-
-# get info about parameters and stations for single collections
-# -> only ogd data without forecasting, nbcn*, obs or phenology
-download_meta_data <- function(id = NULL) {
-    # check id input
-    if (!(length(id) == 1 && is.character(id))) {
-        stop('argument "id" is not a valid single collection id!')
-    }
-    # download info
-    list(
-        datainventory = get_datainventory(id),
-        parameters = get_parameters(id),
-        stations = get_stations(id)
-    )
-}
-
-get_datainventory(cl[21])
-x1 <- lapply(cl[14:23], get_datainventory)
-x2 <- lapply(cl[14:23], get_parameters)
-x3 <- lapply(cl[14:23], get_stations)
-
-
-
-search_meteo <- function(
-    ll_wgs84 = c(5.96, 45.82),
-    ur_wgs84 = c(10.49, 47.81),
-    # ll_lv95 = NULL, ur_lv95 = NULL,
-    from = NULL,
-    to = NULL,
-    ids = NULL,
-    collections = NULL
-) {
-
-}
-
-# base url to REST API / GET search
-valid_collections <- paste(
-    # 'ch.meteoschweiz.ogd-nbcn',
-    # 'ch.meteoschweiz.ogd-nbcn-precip',
-    # 'ch.meteoschweiz.ogd-nime',
-    # 'ch.meteoschweiz.ogd-obs',
-    # 'ch.meteoschweiz.ogd-phenology',
-    # 'ch.meteoschweiz.ogd-pollen',
-    'ch.meteoschweiz.ogd-smn',
-    'ch.meteoschweiz.ogd-smn-precip',
-    'ch.meteoschweiz.ogd-smn-tower',
-    'ch.meteoschweiz.ogd-tot',
-    sep = ','
-)
-bu <- paste0('https://data.geo.admin.ch/api/stac/v1/search?collections=', 
-    valid_collections, '&')
-# t1 <- content(GET(paste0(bu, 'bbox=6.96,45.82,9,46.81')))
-bern <- c(46.989090, 7.463082)
-ll <- c(46.979143, 7.445185)
-ur <- c(46.997198, 7.482103)
-bbox <- paste(c(rev(ll), rev(ur)), collapse = ',')
-t1 <- content(GET(paste0(bu, 'bbox=', bbox, '&datetime=2024-01-01T00:00:00Z/..')))
-# names(t1)
-length(t1$features)
-# NOTE: always limit of 100!!
-names(t1$features[[1]]$assets)
-
-str(t1)
+# # base url to REST API / GET search
+# valid_collections <- paste(
+#     # 'ch.meteoschweiz.ogd-nbcn',
+#     # 'ch.meteoschweiz.ogd-nbcn-precip',
+#     # 'ch.meteoschweiz.ogd-nime',
+#     # 'ch.meteoschweiz.ogd-obs',
+#     # 'ch.meteoschweiz.ogd-phenology',
+#     # 'ch.meteoschweiz.ogd-pollen',
+#     'ch.meteoschweiz.ogd-smn',
+#     'ch.meteoschweiz.ogd-smn-precip',
+#     'ch.meteoschweiz.ogd-smn-tower',
+#     'ch.meteoschweiz.ogd-tot',
+#     sep = ','
+# )
+# bu <- paste0('https://data.geo.admin.ch/api/stac/v1/search?collections=', 
+#     valid_collections, '&')
+# # t1 <- content(GET(paste0(bu, 'bbox=6.96,45.82,9,46.81')))
+# bern <- c(46.989090, 7.463082)
+# ll <- c(46.979143, 7.445185)
+# ur <- c(46.997198, 7.482103)
+# bbox <- paste(c(rev(ll), rev(ur)), collapse = ',')
+# t1 <- content(GET(paste0(bu, 'bbox=', bbox, '&datetime=2024-01-01T00:00:00Z/..')))
+# # names(t1)
+# length(t1$features)
+# # NOTE: always limit of 100!!
+# names(t1$features[[1]]$assets)
+# str(t1)
 
 # https://opendatadocs.meteoswiss.ch/general/download#update-frequency
 # historical    (meas. start until 31.12 last year): once a year        (m, d, h, t)
@@ -362,32 +322,3 @@ str(t1)
 
 # Missing values (e.g. due to instrument failure) are empty fields. 
 # Empty columns are used when a parameter is not measured at all at a certain station.
-
-xnms <- names(t1$features[[1]]$assets)
-
-xx <- t1$features[[1]]$assets[[xnms[1]]]
-
-tf <- tempfile(fileext = xnms[1])
-
-options(setNames(list(tf), xnms[1]))
-
-
-if (!file.exists(getOption(xnms[1]))) {
-    download.file(url = xx$href, destfile = getOption(xnms[1]))
-}
-
-yy <- read.table(getOption(xnms[1]), sep = ';', header = TRUE, fileEncoding = 'Windows-1252')
-head(yy)
-
-head(x3[[1]][, 1:20])
-
-# NOTE: searching stations in a single collection might be more efficient 
-#   via meta data meta_stations
-
-# -> for package => include meta data as data & check updated
-bu <- 'https://data.geo.admin.ch/api/stac/v1/'
-out <- content(GET(paste0(bu, 'collections/ch.meteoschweiz.ogd-smn')))
-out$assets
-sapply(out$assets, '[[', 'updated')
-
-# -> function update_meta_data
