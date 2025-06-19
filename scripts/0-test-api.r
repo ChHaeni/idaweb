@@ -278,6 +278,10 @@ search_by_datetime <- function(from, to, tz = get_tzone(from), previous_search =
     structure(out, class = 'ms_search', from = from, to = to)
 }
 
+## TODO: -> switch search_by_datetime to only one single collection
+#        -> add print function for single collection
+#        -> loop over collections
+
 search_by_datetime('01.01.2018 to 05.02.2018', previous_search = metadata[10])
 search_by_datetime('13.08.2020')
 search_by_datetime('07.02.2024/08.03.2025')
@@ -298,6 +302,8 @@ search_by_parameter
 # add option to provide previous results for further subsetting
 # add function to bind different results together
 # add function to get data from results
+
+# -> convenience functions => show_stations, show_parameters
 
 # TODO: add option to provide path to downloaded files
 
