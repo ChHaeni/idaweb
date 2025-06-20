@@ -89,7 +89,8 @@ supported_collections <- function() {
 }
 
 # get meta data
-get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')) {
+get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters'),
+    cache_dir = tempdir()) {
     type <- match.arg(type)
     if (length(id) == 1L) {
         # check supported id
@@ -120,7 +121,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                     # ?
                 }
                 # download file
-                local_file <- dl_data(file_url, file_checksum)
+                local_file <- dl_data(file_url, file_checksum, cache_dir = cache_dir)
                 out <- read.table(local_file, sep = ';', header = TRUE, fill = TRUE,
                         fileEncoding = 'Windows-1252', comment.char = '', quote = '"'
                     )
@@ -152,7 +153,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
         }
     } else {
         # get data
-        out <- lapply(id, get_metadata, type = type)
+        out <- lapply(id, get_metadata, type = type, cache_dir = cache_dir)
         # remove invalid
         return(out[!sapply(out, is.null)])
     }
@@ -160,9 +161,12 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
 
 # # # save metadata
 # xx <- supported_collections()
-# z1 <- get_metadata(xx, 'data')
-# z2 <- get_metadata(xx, 'stat')
-# z3 <- get_metadata(xx, 'par')
+# # z1 <- get_metadata(xx, 'data')
+# # z2 <- get_metadata(xx, 'stat')
+# # z3 <- get_metadata(xx, 'par')
+# z1 <- get_metadata(xx, 'data', cache_dir = 'cached')
+# z2 <- get_metadata(xx, 'stat', cache_dir = 'cached')
+# z3 <- get_metadata(xx, 'par', cache_dir = 'cached')
 # metadata <- mapply(\(col, inv, stat, para) {
 #     list(
 #         assets = col$assets,
@@ -311,14 +315,14 @@ search_by_parameter
 
 # helper function to download data
 # and get path to local file
-dl_data <- function(url, checksum = NULL) {
+dl_data <- function(url, checksum = NULL, cache_dir = tempdir()) {
     # get data name
     data_name <- basename(url)
     # check if data is already available locally
     local_file <- getOption(data_name)
     if (is.null(local_file)) {
         # temporary file path
-        local_file <- tempfile(fileext = data_name)
+        local_file <- tempfile(pattern = 'cached_', fileext = data_name, tmpdir = cache_dir)
         # download file
         dl_code <- download.file(url = url, destfile = local_file)
         if (dl_code != 0L) {
