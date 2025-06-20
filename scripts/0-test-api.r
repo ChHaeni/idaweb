@@ -173,6 +173,12 @@ search_by_datetime <- function(from, to, tz = get_tzone(from), ms_search = metad
     fromto <- check_fromto(from, to, tz = tz)
     # select datainventory/station/parameters
     if ('datainventory' %in% names(ms_search)) {
+        if (!is.null(sft <- attr(ms_search, 'search_fromto'))) {
+            # check from
+            fromto[1] <- max(sft[1], fromto[1])
+            # check to
+            fromto[2] <- min(sft[2], fromto[2])
+        }
         # TODO: improve these if/else tests! and capture errors
         # check from
         i_from <- is.na(ms_search$datainventory$data_till) | 
@@ -201,7 +207,10 @@ search_by_datetime <- function(from, to, tz = get_tzone(from), ms_search = metad
             wgs84_lat = range(sub_stats$station_coordinates_wgs84_lat),
             wgs84_lon = range(sub_stats$station_coordinates_wgs84_lon),
             parameters = unique(sub_paras$parameter_shortname),
-            collection = basename(dirname(ms_search$assets[[1]]$href))
+            collection = basename(dirname(ms_search$assets[[1]]$href)),
+            search_fromto = fromto,
+            search_location = attr(ms_search, 'search_location'),
+            search_parameters = attr(ms_search, 'search_parameters')
         )
     } else {
         sapply(ms_search, search_by_datetime, from = fromto[1], to = fromto[2], tz = tz,
@@ -215,8 +224,9 @@ search_by_datetime <- function(from, to, tz = get_tzone(from), ms_search = metad
 
 # zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[10])
 zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[7])
+zz1b <- search_by_datetime('01.01.2017 to 01.02.2018', ms_search = zz1)
 zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[[7]])
-zz <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata)
+search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata)
 search_by_datetime('13.08.2020')
 search_by_datetime('07.02.2024/08.03.2025')
 search_by_datetime(to = '13.08.2020')
