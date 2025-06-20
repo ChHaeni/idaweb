@@ -51,25 +51,6 @@ collections <- function(supported_only = FALSE) {
     }
 }
 
-# print method for collections
-print.ms_collections <- function(x, ...) {
-    # get titles
-    titles <- sapply(attr(x, 'collections'), '[[', 'title')
-    mt <- max(nchar(titles)) + grepl('[^a-zA-Z0-9:)( -]', titles) * 2
-    cat('~~~~~~~~~~~~~~~~~~~~~~\n')
-    cat('Open Data - MeteoSwiss\n\n')
-    cat(nl <- length(x), 'collections available:\n')
-    cat(paste(rep('-', nchar(as.character(nl))), collapse = ''),
-        '-----------------------\n', sep = '')
-    for (i in seq_len(nl)) {
-        cat(sprintf(
-                paste0('%2i: %-', mt[i], 's -> %s\n')
-                , i, titles[i], x[i]))
-    }
-    cat('~~~~~~~~~~~~~~~~~~~~~~\n')
-    invisible()
-}
-
 # function to get info on specific data set(s) from collection
 # e.g.: info(collections())
 # x -> either ms_collections object or a valid id
@@ -186,49 +167,95 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
 
 load('data/metadata.rda')
 
-search_by_datetime <- function(from, to, tz = get_tzone(from), rename_me = metadata) {
-    # change argument rename_me to ms_search = idaweb:::metadata or similar argument name
+search_by_datetime <- function(from, to, tz = get_tzone(from), ms_search = metadata) {
+    # change argument ms_search to ms_search = idaweb:::metadata or similar argument name
     # parse from & to
     fromto <- check_fromto(from, to, tz = tz)
     # select datainventory/station/parameters
-    if ('datainventory' %in% names(rename_me)) {
+    if ('datainventory' %in% names(ms_search)) {
         # TODO: improve these if/else tests! and capture errors
         # check from
-        i_from <- is.na(rename_me$datainventory$data_till) | 
-            fromto[1] <= rename_me$datainventory$data_till
+        i_from <- is.na(ms_search$datainventory$data_till) | 
+            fromto[1] <= ms_search$datainventory$data_till
         # check to
-        i_to <- i_from & rename_me$datainventory$data_since <= fromto[2]
+        i_to <- i_from & ms_search$datainventory$data_since <= fromto[2]
         # return subset incl from/to
-        sub_inv <- rename_me$datainventory[i_to, ]
+        sub_inv <- ms_search$datainventory[i_to, ]
         # get stations
-        sub_stats <- rename_me$stations[rename_me$stations$station_abbr %in% 
+        sub_stats <- ms_search$stations[ms_search$stations$station_abbr %in% 
             sub_inv$station_abbr, ]
         # get parameters
-        sub_paras <- rename_me$parameters[rename_me$parameters$parameter_shortname %in% 
+        sub_paras <- ms_search$parameters[ms_search$parameters$parameter_shortname %in% 
             sub_inv$parameter_shortname, ]
         structure(
             list(
-                assets = rename_me$assets,
+                assets = ms_search$assets,
                 datainventory = sub_inv,
                 stations = sub_stats,
                 parameters = sub_paras
             ), 
-            class = 'rename_me', 
+            class = 'ms_search', 
             # get since & till
             data_since = min(sub_inv$data_since),
             data_till = max(sub_inv$data_till),
             wgs84_lat = range(sub_stats$station_coordinates_wgs84_lat),
             wgs84_lon = range(sub_stats$station_coordinates_wgs84_lon),
             parameters = unique(sub_paras$parameter_shortname),
-            collection = basename(dirname(rename_me$assets[[1]]$href))
+            collection = basename(dirname(ms_search$assets[[1]]$href))
         )
     } else {
-        sapply(rename_me, search_by_datetime, from = fromto[1], to = fromto[2], tz = tz,
+        sapply(ms_search, search_by_datetime, from = fromto[1], to = fromto[2], tz = tz,
             simplify = FALSE)
     }
 }
 
-print.rename_me <- function(x, ...) {
+## TODO: -> switch search_by_datetime to only one single collection
+#        -> add print function for single collection
+#        -> loop over collections
+
+# zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[10])
+zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[7])
+zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[[7]])
+zz <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata)
+search_by_datetime('13.08.2020')
+search_by_datetime('07.02.2024/08.03.2025')
+search_by_datetime(to = '13.08.2020')
+search_by_datetime(from = '01.01.2018', to = '13.08.2020')
+
+search_by_location
+search_by_parameter
+
+# add option to provide previous results for further subsetting
+# add function to bind different results together
+# add function to get data from results
+
+# -> convenience functions => show_stations, show_parameters
+
+# TODO: add option to provide path to downloaded files
+
+## methods ----------------------------------------
+
+# print method for collections
+print.ms_collections <- function(x, ...) {
+    # get titles
+    titles <- sapply(attr(x, 'collections'), '[[', 'title')
+    mt <- max(nchar(titles)) + grepl('[^a-zA-Z0-9:)( -]', titles) * 2
+    cat('~~~~~~~~~~~~~~~~~~~~~~\n')
+    cat('Open Data - MeteoSwiss\n\n')
+    cat(nl <- length(x), 'collections available:\n')
+    cat(paste(rep('-', nchar(as.character(nl))), collapse = ''),
+        '-----------------------\n', sep = '')
+    for (i in seq_len(nl)) {
+        cat(sprintf(
+                paste0('%2i: %-', mt[i], 's -> %s\n')
+                , i, titles[i], x[i]))
+    }
+    cat('~~~~~~~~~~~~~~~~~~~~~~\n')
+    invisible()
+}
+
+# print method for search results
+print.ms_search <- function(x, ...) {
     # fix paras
     paras <- paste(attr(x, 'parameters'), collapse = ',')
     if (nchar(paras) > 40) {
@@ -249,30 +276,6 @@ print.rename_me <- function(x, ...) {
     cat('~~~\n')
     invisible()
 }
-
-## TODO: -> switch search_by_datetime to only one single collection
-#        -> add print function for single collection
-#        -> loop over collections
-
-# zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[10])
-zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[7])
-zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[[7]])
-zz <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata)
-search_by_datetime('13.08.2020')
-search_by_datetime('07.02.2024/08.03.2025')
-search_by_datetime(to = '13.08.2020')
-search_by_datetime(from = '01.01.2018', to = '13.08.2020')
-
-search_by_location
-search_by_parameter
-
-# add option to provide previous results for further subsetting
-# add function to bind different results together
-# add function to get data from results
-
-# -> convenience functions => show_stations, show_parameters
-
-# TODO: add option to provide path to downloaded files
 
 ##  • helper functions ====================
 
