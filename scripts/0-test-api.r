@@ -186,24 +186,13 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
 
 load('data/metadata.rda')
 
-get_tzone <- function(x) {
-    out <- attr(x, 'tzone')
-    if (is.null(out)) {
-        if (inherits(x, 'POSIXct')) {
-            out <- ''
-        } else {
-            out <- 'UTC'
-        }
-    }
-    out
-}
-
 search_by_datetime <- function(from, to, tz = get_tzone(from), rename_me = metadata) {
-    fromto <- check_fromto(from, to, tz = tz)
     # change argument rename_me to ms_search = idaweb:::metadata or similar argument name
+    # parse from & to
+    fromto <- check_fromto(from, to, tz = tz)
     # select datainventory/station/parameters
     if ('datainventory' %in% names(rename_me)) {
-        # TODO: improve this testing! and capture errors
+        # TODO: improve these if/else tests! and capture errors
         # check from
         i_from <- is.na(rename_me$datainventory$data_till) | 
             fromto[1] <= rename_me$datainventory$data_till
@@ -217,100 +206,55 @@ search_by_datetime <- function(from, to, tz = get_tzone(from), rename_me = metad
         # get parameters
         sub_paras <- rename_me$parameters[rename_me$parameters$parameter_shortname %in% 
             sub_inv$parameter_shortname, ]
-        structure(list(
-            datainventory = sub_inv,
-            stations = sub_stats,
-            parameters = sub_paras
-        ), class = 'rename_me', from = fromto[1], to = fromto[2])
+        structure(
+            list(
+                assets = rename_me$assets,
+                datainventory = sub_inv,
+                stations = sub_stats,
+                parameters = sub_paras
+            ), 
+            class = 'rename_me', 
+            # get since & till
+            data_since = min(sub_inv$data_since),
+            data_till = max(sub_inv$data_till),
+            wgs84_lat = range(sub_stats$station_coordinates_wgs84_lat),
+            wgs84_lon = range(sub_stats$station_coordinates_wgs84_lon),
+            parameters = unique(sub_paras$parameter_shortname),
+            collection = basename(dirname(rename_me$assets[[1]]$href))
+        )
     } else {
         sapply(rename_me, search_by_datetime, from = fromto[1], to = fromto[2], tz = tz,
             simplify = FALSE)
     }
 }
 
-check_fromto <- function(from, to, tz = get_tzone(from)) {
-    if (!missing(from) && length(from) != 1L) stop('argument "from" must have length 1!')
-    if (!missing(to) && length(to) != 1L) stop('argument "to" must have length 1!')
-    if (missing(to)) {
-        # check from
-        switch(class(from)[1]
-            , character = {
-                seps <- c('to', '/', '::', ' - ')
-                # split any time ranges
-                from_to <- trimws(unlist(strsplit(from, 
-                    split = paste0(' ?', paste(seps, collapse = ' ?| ?'), ' ?'))))
-                # parse datetimes to POSIXct
-                if (from_to[1] == '') {
-                    from <- as.POSIXct(-Inf)
-                } else {
-                    from <- fa_st(from_to[1], tz = tz)
-                }
-                if (length(from_to) == 1L) {
-                    to <- as.POSIXct(Inf)
-                } else {
-                    to <- fa_st(from_to[2], tz = tz)
-                }
-            }
-            , POSIXlt = {
-                from <- as.POSIXct(from)
-                to <- as.POSIXct(Inf)
-            }
-            , POSIXct = {
-                to <- as.POSIXct(Inf)
-            }
-            , stop('argument "from" should be of class "character" or "POSIXt"!')
-        )
-    } else if (missing(from)) {
-        # parse to
-        to <- switch(class(to)[1]
-            , character = fa_st(trimws(to), tz = tz)
-            , POSIXlt = as.POSIXct(to)
-            , POSIXct = to
-            , stop('argument "to" should be of class "character" or "POSIXt"!')
-        )
-        from <- as.POSIXct(-Inf)
-    } else {
-        # parse from
-        from <- switch(class(from)[1]
-            , character = fa_st(trimws(from), tz = tz)
-            , POSIXlt = as.POSIXct(from)
-            , POSIXct = from
-            , stop('argument "from" should be of class "character" or "POSIXt"!')
-        )
-        # parse to
-        to <- switch(class(to)[1]
-            , character = fa_st(trimws(to), tz = tz)
-            , POSIXlt = as.POSIXct(to)
-            , POSIXct = to
-            , stop('argument "to" should be of class "character" or "POSIXt"!')
-        )
+print.rename_me <- function(x, ...) {
+    paras <- paste(attr(x, 'parameters'), collapse = ',')
+    if (nchar(paras) > 40) {
+        paras <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1 ... \\2', paras)
     }
-    # check if to > from
-    if (to <= from) {
-        stop('argument "to" must indicate a time which occurs later than "from"')
-    }
-    # return vector
-    c(from, to)
+    cat('~~~\n')
+    cat('Collection:', attr(x, 'collection'), '\n')
+    cat('  data since', format(attr(x, 'data_since')), '\n')
+    cat('  data till', format(attr(x, 'data_till')), '\n')
+    cat('  wgs84 lat', paste(attr(x, 'wgs84_lat'), collapse = ' .. '), '\n')
+    cat('  wgs84 lon', paste(attr(x, 'wgs84_lon'), collapse = ' .. '), '\n')
+    cat('  parameters:', paras, '\n')
+    cat('~~~\n')
+    invisible()
 }
 
 ## TODO: -> switch search_by_datetime to only one single collection
 #        -> add print function for single collection
 #        -> loop over collections
 
-search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[10])
+# zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[10])
+zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[7])
 zz <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata)
 search_by_datetime('13.08.2020')
 search_by_datetime('07.02.2024/08.03.2025')
 search_by_datetime(to = '13.08.2020')
 search_by_datetime(from = '01.01.2018', to = '13.08.2020')
-
-fa_st <- function(x, tz) {
-    formats <- c("%Y", "%d.%m.%Y", "%d.%m.%y", "%d.%m.%Y %H:%M", "%d.%m.%y %H:%M",
-        "%d.%m.%Y %H:%M:%S", "%d.%m.%y %H:%M:%S", "%Y-%m-%d", "%y-%m-%d", 
-        "%Y-%m-%d %H:%M", "%y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%y-%m-%d %H:%M:%S")
-    lubridate::fast_strptime(x, format = formats, tz = tz, lt = FALSE)
-}
-
 
 search_by_location
 search_by_parameter
@@ -378,6 +322,93 @@ check_supported <- function(id) {
     } else {
         FALSE
     }
+}
+
+# parse from & to datetime input
+check_fromto <- function(from, to, tz = get_tzone(from)) {
+    if (!missing(from) && length(from) != 1L) stop('argument "from" must have length 1!')
+    if (!missing(to) && length(to) != 1L) stop('argument "to" must have length 1!')
+    if (missing(to)) {
+        # check from
+        switch(class(from)[1]
+            , character = {
+                seps <- c('to', '/', '::', ' - ')
+                # split any time ranges
+                from_to <- trimws(unlist(strsplit(from, 
+                    split = paste0(' ?', paste(seps, collapse = ' ?| ?'), ' ?'))))
+                # parse datetimes to POSIXct
+                if (from_to[1] == '') {
+                    from <- as.POSIXct(-Inf)
+                } else {
+                    from <- fa_st(from_to[1], tz = tz)
+                }
+                if (length(from_to) == 1L) {
+                    to <- as.POSIXct(Inf)
+                } else {
+                    to <- fa_st(from_to[2], tz = tz)
+                }
+            }
+            , POSIXlt = {
+                from <- as.POSIXct(from)
+                to <- as.POSIXct(Inf)
+            }
+            , POSIXct = {
+                to <- as.POSIXct(Inf)
+            }
+            , stop('argument "from" should be of class "character" or "POSIXt"!')
+        )
+    } else if (missing(from)) {
+        # parse to
+        to <- switch(class(to)[1]
+            , character = fa_st(trimws(to), tz = tz)
+            , POSIXlt = as.POSIXct(to)
+            , POSIXct = to
+            , stop('argument "to" should be of class "character" or "POSIXt"!')
+        )
+        from <- as.POSIXct(-Inf)
+    } else {
+        # parse from
+        from <- switch(class(from)[1]
+            , character = fa_st(trimws(from), tz = tz)
+            , POSIXlt = as.POSIXct(from)
+            , POSIXct = from
+            , stop('argument "from" should be of class "character" or "POSIXt"!')
+        )
+        # parse to
+        to <- switch(class(to)[1]
+            , character = fa_st(trimws(to), tz = tz)
+            , POSIXlt = as.POSIXct(to)
+            , POSIXct = to
+            , stop('argument "to" should be of class "character" or "POSIXt"!')
+        )
+    }
+    # check if to > from
+    if (to <= from) {
+        stop('argument "to" must indicate a time which occurs later than "from"')
+    }
+    # return vector
+    c(from, to)
+}
+
+# parse time zone with default UTC
+get_tzone <- function(x) {
+    out <- attr(x, 'tzone')
+    if (is.null(out)) {
+        if (inherits(x, 'POSIXct')) {
+            out <- ''
+        } else {
+            out <- 'UTC'
+        }
+    }
+    out
+}
+
+# parse characters with common datetime formats
+fa_st <- function(x, tz) {
+    formats <- c("%Y", "%d.%m.%Y", "%d.%m.%y", "%d.%m.%Y %H:%M", "%d.%m.%y %H:%M",
+        "%d.%m.%Y %H:%M:%S", "%d.%m.%y %H:%M:%S", "%Y-%m-%d", "%y-%m-%d", 
+        "%Y-%m-%d %H:%M", "%y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%y-%m-%d %H:%M:%S")
+    lubridate::fast_strptime(x, format = formats, tz = tz, lt = FALSE)
 }
 
 
