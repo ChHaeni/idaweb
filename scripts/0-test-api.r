@@ -229,14 +229,20 @@ search_by_datetime <- function(from, to, tz = get_tzone(from), rename_me = metad
 }
 
 print.rename_me <- function(x, ...) {
+    # fix paras
     paras <- paste(attr(x, 'parameters'), collapse = ',')
     if (nchar(paras) > 40) {
-        paras <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1 ... \\2', paras)
+        paras <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', paras)
+    }
+    # fix till
+    data_till <- format(attr(x, 'data_till'))
+    if (is.na(data_till)) {
+        data_till <- 'today'
     }
     cat('~~~\n')
     cat('Collection:', attr(x, 'collection'), '\n')
     cat('  data since', format(attr(x, 'data_since')), '\n')
-    cat('  data till', format(attr(x, 'data_till')), '\n')
+    cat('  data until', data_till, '\n')
     cat('  wgs84 lat', paste(attr(x, 'wgs84_lat'), collapse = ' .. '), '\n')
     cat('  wgs84 lon', paste(attr(x, 'wgs84_lon'), collapse = ' .. '), '\n')
     cat('  parameters:', paras, '\n')
@@ -250,6 +256,7 @@ print.rename_me <- function(x, ...) {
 
 # zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[10])
 zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[7])
+zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[[7]])
 zz <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata)
 search_by_datetime('13.08.2020')
 search_by_datetime('07.02.2024/08.03.2025')
