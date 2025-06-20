@@ -197,7 +197,38 @@ get_tzone <- function(x) {
     }
     out
 }
-search_by_datetime <- function(from, to, tz = get_tzone(from), previous_search = NULL) {
+
+search_by_datetime <- function(from, to, tz = get_tzone(from), rename_me = metadata) {
+    fromto <- check_fromto(from, to, tz = tz)
+    # change argument rename_me to ms_search = idaweb:::metadata or similar argument name
+    # select datainventory/station/parameters
+    if ('datainventory' %in% names(rename_me)) {
+        # TODO: improve this testing! and capture errors
+        # check from
+        i_from <- is.na(rename_me$datainventory$data_till) | 
+            fromto[1] <= rename_me$datainventory$data_till
+        # check to
+        i_to <- i_from & rename_me$datainventory$data_since <= fromto[2]
+        # return subset incl from/to
+        sub_inv <- rename_me$datainventory[i_to, ]
+        # get stations
+        sub_stats <- rename_me$stations[rename_me$stations$station_abbr %in% 
+            sub_inv$station_abbr, ]
+        # get parameters
+        sub_paras <- rename_me$parameters[rename_me$parameters$parameter_shortname %in% 
+            sub_inv$parameter_shortname, ]
+        structure(list(
+            datainventory = sub_inv,
+            stations = sub_stats,
+            parameters = sub_paras
+        ), class = 'rename_me', from = fromto[1], to = fromto[2])
+    } else {
+        sapply(rename_me, search_by_datetime, from = fromto[1], to = fromto[2], tz = tz,
+            simplify = FALSE)
+    }
+}
+
+check_fromto <- function(from, to, tz = get_tzone(from)) {
     if (!missing(from) && length(from) != 1L) stop('argument "from" must have length 1!')
     if (!missing(to) && length(to) != 1L) stop('argument "to" must have length 1!')
     if (missing(to)) {
@@ -258,35 +289,16 @@ search_by_datetime <- function(from, to, tz = get_tzone(from), previous_search =
     if (to <= from) {
         stop('argument "to" must indicate a time which occurs later than "from"')
     }
-    # idaweb:::metadata
-    # change argument to ms_search = idaweb:::metadata
-    # select datainventory/station/parameters
-    out <- sapply(previous_search, \(x) {
-        # check from
-        i_from <- is.na(x$datainventory$data_till) | from <= x$datainventory$data_till
-        # check to
-        i_to <- i_from & x$datainventory$data_since <= to
-        # return subset incl from/to
-        sub_inv <- x$datainventory[i_to, ]
-        # get stations
-        sub_stats <- x$stations[x$stations$station_abbr %in% sub_inv$station_abbr, ]
-        # get parameters
-        sub_paras <- x$parameters[x$parameters$parameter_shortname %in% 
-            sub_inv$parameter_shortname, ]
-        list(
-            datainventory = sub_inv,
-            stations = sub_stats,
-            parameters = sub_paras
-        )
-    }, simplify = FALSE)
-    structure(out, class = 'ms_search', from = from, to = to)
+    # return vector
+    c(from, to)
 }
 
 ## TODO: -> switch search_by_datetime to only one single collection
 #        -> add print function for single collection
 #        -> loop over collections
 
-search_by_datetime('01.01.2018 to 05.02.2018', previous_search = metadata[10])
+search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata[10])
+zz <- search_by_datetime('01.01.2018 to 05.02.2018', rename_me = metadata)
 search_by_datetime('13.08.2020')
 search_by_datetime('07.02.2024/08.03.2025')
 search_by_datetime(to = '13.08.2020')
