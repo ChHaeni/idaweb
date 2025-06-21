@@ -218,22 +218,31 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), ms_search = m
     }
 }
 
-## TODO: -> switch search_by_datetime to only one single collection
-#        -> add print function for single collection
-#        -> loop over collections
-
-# zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[10])
-zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[7])
-zz1b <- search_by_datetime('01.01.2017 to 01.02.2018', ms_search = zz1)
-zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[[7]])
-search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata)
-search_by_datetime('13.08.2020')
-search_by_datetime('07.02.2024/08.03.2025')
-search_by_datetime(to = '13.08.2020')
-search_by_datetime(from = '01.01.2018', to = '13.08.2020')
+# # zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[10])
+# zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[7])
+# zz1b <- search_by_datetime('01.01.2017 to 01.02.2018', ms_search = zz1)
+# zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata[[7]])
+# search_by_datetime('01.01.2018 to 05.02.2018', ms_search = metadata)
+# search_by_datetime('13.08.2020')
+# search_by_datetime('07.02.2024/08.03.2025')
+# search_by_datetime(to = '13.08.2020')
+# search_by_datetime(from = '01.01.2018', to = '13.08.2020')
 
 search_by_location
+# -> search ms_search$stations
+# TODO:
+#   allow searching by both lv95 & wgs84, even lv03?
+#   => convert between coordinate systems -> use sf?
+sf::st_crs('EPSG:4326')
+sf::st_crs('EPSG:2056')
+sf::st_crs('EPSG:21781')
+x <- cbind(c(600000, 620000), c(200000, 220000))
+x1 <- gel::set_crs(x, 'lv03')
+x2 <- gel::set_crs(x, 'lv95')
+sf::sf_project('EPSG:21781', 'EPSG:4326', x)
+
 search_by_parameter
+# -> search ms_search$parameters
 
 # add option to provide previous results for further subsetting
 # add function to bind different results together
