@@ -167,7 +167,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
 
 load('data/metadata.rda')
 
-search_by_datetime <- function(from, to, tz = get_tzone(from), ms_search = metadata) {
+search_by_datetime <- function(from, to, tz = get_tzone(from, to), ms_search = metadata) {
     # change argument ms_search to ms_search = idaweb:::metadata or similar argument name
     # parse from & to
     fromto <- check_fromto(from, to, tz = tz)
@@ -345,7 +345,7 @@ check_supported <- function(id) {
 }
 
 # parse from & to datetime input
-check_fromto <- function(from, to, tz = get_tzone(from)) {
+check_fromto <- function(from, to, tz = get_tzone(from, to)) {
     if (!missing(from) && length(from) != 1L) stop('argument "from" must have length 1!')
     if (!missing(to) && length(to) != 1L) stop('argument "to" must have length 1!')
     if (missing(to)) {
@@ -411,16 +411,27 @@ check_fromto <- function(from, to, tz = get_tzone(from)) {
 }
 
 # parse time zone with default UTC
-get_tzone <- function(x) {
-    out <- attr(x, 'tzone')
-    if (is.null(out)) {
-        if (inherits(x, 'POSIXct')) {
-            out <- ''
-        } else {
-            out <- 'UTC'
-        }
+get_tzone <- function(x, y) {
+    if (missing(x)) {
+        x <- y
     }
-    out
+    tzx <- attr(x, 'tzone')
+    if (missing(y)) {
+        y <- x
+    }
+    tzy <- attr(y, 'tzone')
+    if (is.null(tzx) && is.null(tzy)) {
+        if (inherits(x, 'POSIXt') || inherits(y, 'POSIXt')) {
+            tzout <- ''
+        } else {
+            tzout <- 'UTC'
+        }
+    } else if (!is.null(tzx)) {
+        tzout <- tzx
+    } else {
+        tzout <- tzy
+    }
+    tzout
 }
 
 # parse characters with common datetime formats
