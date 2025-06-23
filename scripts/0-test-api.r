@@ -243,6 +243,15 @@ sf::sf_project('EPSG:21781', 'EPSG:4326', x)
 
 search_by_parameter
 # -> search ms_search$parameters
+# -> search/filter by shortname, units, granularity, group, description in all languages(?)
+#   add option to choose language with _en as default
+head(metadata[[1]]$parameters)
+x <- 'wind hom jahrmitt'
+y <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
+grep(y, metadata[[1]]$parameters[, 2], value = TRUE, ignore.case = TRUE)
+x <- 'wind speed monthly mean'
+y <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
+grep(y, metadata[[1]]$parameters[, 'parameter_description_en'], value = TRUE, ignore.case = TRUE)
 
 # add option to provide previous results for further subsetting
 # add function to bind different results together
@@ -250,7 +259,8 @@ search_by_parameter
 
 # -> convenience functions => show_stations, show_parameters
 
-# TODO: add option to provide path to downloaded files
+# add function to get data
+
 
 ## methods ----------------------------------------
 
