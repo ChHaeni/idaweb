@@ -241,17 +241,117 @@ x1 <- gel::set_crs(x, 'lv03')
 x2 <- gel::set_crs(x, 'lv95')
 sf::sf_project('EPSG:21781', 'EPSG:4326', x)
 
-search_by_parameter
+search_by_parameter <- function(shortname, unit, group, description, 
+    language = c('en', 'de', 'fr', 'it'), 
+    granularity = c('T', 'H', 'D', 'M', 'Y'), 
+    ms_search = metadata) {
+    if ('datainventory' %in% names(ms_search)) {
+        sub_paras <- ms_search$parameter
+        language <- match.arg(language)
+        search_parameters <- list()
+        if (!missing(shortname)) {
+            # search by shortname (vector)
+            ind <- unlist(lapply(shortname, grep, sub_paras$parameter_shortname))
+            sub_paras <- sub_paras[unique(ind), ]
+            search_parameters <- c(search_parameters, list(shortname = shortname))
+        }
+        if (!missing(unit)) {
+            # search by unit (vector)
+            ind <- unlist(lapply(unit, grep, sub_paras$parameter_unit))
+            sub_paras <- sub_paras[unique(ind), ]
+            search_parameters <- c(search_parameters, list(unit = unit))
+        }
+        if (!missing(group)) {
+            # search by group (vector)
+            ind <- unlist(lapply(group, grep, sub_paras[[paste0('parameter_group_', 
+                    language)]]))
+            sub_paras <- sub_paras[unique(ind), ]
+            search_parameters <- c(search_parameters, list(group = group))
+        }
+        if (!missing(granularity)) {
+            # search by granularity (vector)
+            ind <- sub_paras$parameter_granularity %in% granularity
+            sub_paras <- sub_paras[unique(ind), ]
+            search_parameters <- c(search_parameters, list(granularity = granularity))
+        }
+        if (!missing(description)) {
+            # search by group (vector)
+            ind <- unlist(lapply(group, fuzzy_search, 
+                sub_paras[[paste0('parameter_description_', language)]]))
+            sub_paras <- sub_paras[unique(ind), ]
+            search_parameters <- c(search_parameters, list(description = description))
+        }
+        # get inventory
+        sub_inv <- ms_search$datainventory[ms_search$datainventory$parameter_shortname %in% 
+            sub_paras$parameter_shortname, ]
+        # get stations
+        sub_stats <- ms_search$stations[ms_search$stations$station_abbr %in% 
+            sub_inv$station_abbr, ]
+        if (nrow(sub_inv) > 0) {
+            data_since <- min(sub_inv$data_since)
+            data_till <- max(sub_inv$data_till)
+            wgs84_lat <- range(sub_stats$station_coordinates_wgs84_lat)
+            wgs84_lon <- range(sub_stats$station_coordinates_wgs84_lon)
+            parameters <- unique(sub_paras$parameter_shortname)
+        } else {
+            data_since <- lubridate::NA_POSIXct_
+            data_till <- NA_integer_
+            wgs84_lat <- c(NA_real_, NA_real_)
+            wgs84_lon <- c(NA_real_, NA_real_)
+            parameters <- NA_character_
+        }
+        structure(
+            list(
+                assets = ms_search$assets,
+                datainventory = sub_inv,
+                stations = sub_stats,
+                parameters = sub_paras
+            ), 
+            class = 'ms_search', 
+            # get since & till
+            data_since = data_since,
+            data_till = data_till,
+            wgs84_lat = wgs84_lat,
+            wgs84_lon = wgs84_lon,
+            parameters = parameters,
+            collection = basename(dirname(ms_search$assets[[1]]$href)),
+            search_fromto = attr(ms_search, 'search_fromto'),
+            search_location = attr(ms_search, 'search_location'),
+            search_parameters = search_parameters
+        )
+    } else {
+        # mc <- match.call(
+        # sapply(ms_search, \(x, ...) {
+        #     do.call(search_by_parameter, c(list(ms_search = x), ...))
+        # }, as.list(mc)[-1], simplify = FALSE)
+        sapply(ms_search, search_by_parameter, shortname = shortname, unit = unit, 
+            group = group, description = description, language = language, 
+            granularity = granularity, simplify = FALSE)
+    }
+}
+
+
+xx <- search_by_parameter(group = 'wind', granularity = 'T')
+x1 <- search_by_parameter(group = 'wind', granularity = 'T', ms_search = metadata[[1]])
+
 # -> search ms_search$parameters
 # -> search/filter by shortname, units, granularity, group, description in all languages(?)
 #   add option to choose language with _en as default
 head(metadata[[1]]$parameters)
+str(metadata[[1]]$parameters)
 x <- 'wind hom jahrmitt'
 y <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
 grep(y, metadata[[1]]$parameters[, 2], value = TRUE, ignore.case = TRUE)
 x <- 'wind speed monthly mean'
 y <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
 grep(y, metadata[[1]]$parameters[, 'parameter_description_en'], value = TRUE, ignore.case = TRUE)
+x <- 'wind speed monthly mean'
+fuzzy_search(x, metadata[[1]]$parameters[, 'parameter_description_en'])
+
+fuzzy_search <- function(x, y, ignore.case = TRUE) {
+    fuzzy_x <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
+    grep(fuzzy_x, y, value = TRUE, ignore.case = ignore.case)
+}
 
 # add option to provide previous results for further subsetting
 # add function to bind different results together
@@ -291,9 +391,11 @@ print.ms_search <- function(x, ...) {
         paras <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', paras)
     }
     # fix till
-    data_till <- format(attr(x, 'data_till'))
-    if (is.na(data_till)) {
+    data_till <- attr(x, 'data_till')
+    if (is.na(data_till) && lubridate::is.POSIXct(data_till)) {
         data_till <- 'today'
+    } else {
+        data_till <- format(data_till)
     }
     cat('~~~\n')
     cat('Collection:', attr(x, 'collection'), '\n')
