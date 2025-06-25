@@ -271,12 +271,12 @@ search_by_parameter <- function(shortname, unit, group, description,
         if (!missing(granularity)) {
             # search by granularity (vector)
             ind <- sub_paras$parameter_granularity %in% granularity
-            sub_paras <- sub_paras[unique(ind), ]
+            sub_paras <- sub_paras[ind, ]
             search_parameters <- c(search_parameters, list(granularity = granularity))
         }
         if (!missing(description)) {
             # search by group (vector)
-            ind <- unlist(lapply(group, fuzzy_search, 
+            ind <- unlist(lapply(description, fuzzy_search, 
                 sub_paras[[paste0('parameter_description_', language)]]))
             sub_paras <- sub_paras[unique(ind), ]
             search_parameters <- c(search_parameters, list(description = description))
@@ -320,10 +320,6 @@ search_by_parameter <- function(shortname, unit, group, description,
             search_parameters = search_parameters
         )
     } else {
-        # mc <- match.call(
-        # sapply(ms_search, \(x, ...) {
-        #     do.call(search_by_parameter, c(list(ms_search = x), ...))
-        # }, as.list(mc)[-1], simplify = FALSE)
         sapply(ms_search, search_by_parameter, shortname = shortname, unit = unit, 
             group = group, description = description, language = language, 
             granularity = granularity, simplify = FALSE)
@@ -332,26 +328,11 @@ search_by_parameter <- function(shortname, unit, group, description,
 
 
 xx <- search_by_parameter(group = 'wind', granularity = 'T')
-x1 <- search_by_parameter(group = 'wind', granularity = 'T', ms_search = metadata[[1]])
-
-# -> search ms_search$parameters
-# -> search/filter by shortname, units, granularity, group, description in all languages(?)
-#   add option to choose language with _en as default
-head(metadata[[1]]$parameters)
-str(metadata[[1]]$parameters)
-x <- 'wind hom jahrmitt'
-y <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
-grep(y, metadata[[1]]$parameters[, 2], value = TRUE, ignore.case = TRUE)
-x <- 'wind speed monthly mean'
-y <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
-grep(y, metadata[[1]]$parameters[, 'parameter_description_en'], value = TRUE, ignore.case = TRUE)
-x <- 'wind speed monthly mean'
-fuzzy_search(x, metadata[[1]]$parameters[, 'parameter_description_en'])
-
-fuzzy_search <- function(x, y, ignore.case = TRUE) {
-    fuzzy_x <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
-    grep(fuzzy_x, y, value = TRUE, ignore.case = ignore.case)
-}
+x1 <- search_by_parameter(group = 'wind', granularity = 'T', ms_search = metadata[[7]])
+x2 <- search_by_parameter(group = 'Wind', granularity = 'T', ms_search = metadata[[7]],
+    description = 'geschw skal m/s', language = 'de')
+x3 <- search_by_parameter(ms_search = metadata[[7]], granularity = c('T', 'H'),
+    description = 'geschw skal m/s', language = 'de')
 
 # add option to provide previous results for further subsetting
 # add function to bind different results together
@@ -561,6 +542,12 @@ fa_st <- function(x, tz) {
         "%d.%m.%Y %H:%M:%S", "%d.%m.%y %H:%M:%S", "%Y-%m-%d", "%y-%m-%d", 
         "%Y-%m-%d %H:%M", "%y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S", "%y-%m-%d %H:%M:%S")
     lubridate::fast_strptime(x, format = formats, tz = tz, lt = FALSE)
+}
+
+# "fuzzy" searching strings
+fuzzy_search <- function(x, y, ignore.case = TRUE, value = FALSE) {
+    fuzzy_x <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
+    grep(fuzzy_x, y, value = value, ignore.case = ignore.case)
 }
 
 
