@@ -410,10 +410,10 @@ search_by_parameter <- function(shortname, unit, group, description,
     if (from < cy_jan) {
         from_base10 <- floor(lubridate::year(from) / 10) * 10
         from_bases <- seq(from_base10, lubridate::year(cy_jan), by = 10)
-        hist_ranges <- sapply(from_bases, \(x) paste(x, x + 9, sep = '-'))
         file_list <- c(file_list, lapply(from_bases, \(x) {
             list(
-                filename = paste(pre, stat, gran, paste0(x, '-', x + 9, '.csv'), sep = '_'),
+                filename = paste(pre, stat, gran, 
+                    paste0('historical_', x, '-', x + 9, '.csv'), sep = '_'),
                 from = max(from, cy_jan),
                 to = min(to, yd12)
             )
@@ -428,7 +428,8 @@ search_by_parameter <- function(shortname, unit, group, description,
 }
 
 # add function to get data
-get_filename <- function(meta_search) {
+get_filenames <- function(meta_search) {
+    # FIXME: => more than one collection! => loop recursively
     # meta_search = search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
     di <- meta_search$datainventory
     if (nrow(di) == 0) {
@@ -448,30 +449,51 @@ get_filename <- function(meta_search) {
         to <- attr(meta_search, 'data_till')
     }
     # prepended filenames
-    pre <- sub('ch.meteoschweiz.', '', attr(meta_search, 'collection'), fixed = TRUE)
+    pre <- sub('ch.meteoschweiz.', '', collection <- attr(meta_search, 'collection'),
+        fixed = TRUE)
     # loop over station/granularity pairs
     dat <- merge(di[, c('station_abbr', 'parameter_shortname', 'data_since', 'data_till')],
         pa[, c('parameter_shortname', 'parameter_granularity')])
     # split by groups of station/granularity
     dsplit <- split(dat, paste(dat$station_abbr, dat$parameter_granularity, sep = '/'))
     # loop over groups
-    lapply(dsplit, \(x) {
-        .get_filenames(x, from, to, now, pre, yesterday_12UTC, current_year_jan1)
-    })
+    structure(c(
+        list(collection = collection),
+        lapply(dsplit, \(x) {
+            .get_filenames(x, from, to, now, pre, yesterday_12UTC, current_year_jan1)
+        })
+    ), class = 'file_list')
 }
 
 # x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
-xx <- get_filename(x1)
+xx <- get_filenames(x1)
 
-xx[[1]]
+get_files <- function(x) {
+    # check if more than one collection
+    # get collection
+    cl <- x$collection
+    # loope over file list
+    # lapply(x[-1], \(l) {
+    lapply(x[2:4], \(l) {
+        c(
+            l,
+            files = list(lapply(l$file_list, \(fl) {
+                dl_data(ms_url(cl, '/', l$station, '/', fl$filename))
+            }))
+        )
+    })
+}
+
+yy <- get_files(xx)
+
+yy[[1]]
 
 
-xx <- GET(ms_url('api/stac/v1/collections/', attr(meta_search, 'collection'), '/items/',
-        tolower(di[[1]][1])))
-yy <- content(xx)
-str(yy)
+xy <- content(GET(ms_url('api/stac/v1/collections/', attr(meta_search, 'collection'), '/items/',
+        tolower(di[[1]][1]))))
+str(xy)
 
-names(yy$assets)
+names(xy$assets)
 
 # TODO: add granularity & parameter group to print.meta_search
 
