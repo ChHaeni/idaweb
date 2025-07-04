@@ -478,36 +478,44 @@ xx <- get_filenames(x1)
 
 get_files <- function(x, cache_dir = tempdir()) {
     # check if more than one collection
+    # also check class
     # get collection
     cl <- x$collection
     # loope over file list
-    # lapply(x[-1], \(l) {
-    lapply(x, \(l) {
-        # get info on station
-        info <- content(GET(ms_url('api/stac/v1/collections/', cl, '/items/', 
-                    l$station)))$assets
-        # download files
-        c(
-            l,
-            files = list(lapply(l$file_list, \(fl) {
-                # what if missing?
-                if (fl$filename %in% names(info)) {
-                    dl_data(ms_url(cl, '/', l$station, '/', fl$filename), 
-                        checksum = info[[fl$filename]][['file:checksum']], cache_dir = cache_dir)
-                } else {
-                    warning('file "', fl$filename, '" cannot be downloaded')
-                    NULL
+    structure(c(
+        list(collection = cl),
+        lapply(x[-1], \(l) {
+            # get info on station
+            info <- content(GET(ms_url('api/stac/v1/collections/', cl, '/items/', 
+                        l$station)))$assets
+            # download files
+            c(
+                l,
+                files = {
+                    out <- lapply(l$file_list, \(fl) {
+                    # what if missing?
+                    if (fl$filename %in% names(info)) {
+                        dl_data(ms_url(cl, '/', l$station, '/', fl$filename), 
+                            checksum = info[[fl$filename]][['file:checksum']], 
+                            cache_dir = cache_dir)
+                    } else {
+                        warning('file "', fl$filename, '" cannot be downloaded')
+                        NULL
+                    }
+                    })
+                    names(out) <- sapply(l$file_list, '[[', 'filename')
+                    list(out)
                 }
-            }))
-        )
-    })
+            )
+        })
+    ), class = 'dl_files')
 }
 
-yy <- get_files(xx)
+yy <- get_files(xx[1:5])
 
-yy[[1]]
+x <- yy[1:2]
 
-
+str(x)
 
 # xy <- content(GET(ms_url('api/stac/v1/collections/', attr(meta_search, 'collection'), '/items/',
 #         tolower(di[[1]][1]))))
