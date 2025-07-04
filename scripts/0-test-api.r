@@ -522,6 +522,40 @@ str(x)
 # str(xy)
 # names(xy$assets)
 
+require(data.table)
+get_data <- function(x, as_DT = TRUE) {
+    # check class & check if more than one collection
+    # loop over splits
+    out <- lapply(x[-1], \(sp) {
+        # time format
+        time_format <- switch(sp$granularity
+            , 't' = '%d.%m.%Y %H:%M'
+        )
+        # loop over files
+        d_list <- lapply(sp$file_list, \(fl) {
+            suppressWarnings(
+                dat <- fread(sp$files[[fl$filename]], select = c('station_abbr', 
+                        'reference_timestamp', sp$parameters))
+            )
+            # parse times & subset
+            dat[, time := lubridate::fast_strptime(reference_timestamp, 
+                format = time_format, lt = FALSE)][, reference_timestamp := NULL]
+            # subset
+            dat[time >= fl$from & time <= fl$to]
+        })
+        dout <- rbindlist(d_list, fill = TRUE)
+        # sort by time as first column
+        setcolorder(dout, 'time')
+        setorder(dout, 'time')
+        # return
+        dout
+    })
+    browser()
+}
+
+zz_data <- get_data(yy)
+
+# TODO: station_info(zz_data), parameter_info(zz_data)..
 
 # TODO: add granularity & parameter group to print.meta_search
 
