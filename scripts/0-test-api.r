@@ -555,7 +555,7 @@ dl_data <- function(url, checksum = NULL, cache_dir = tempdir()) {
     local_file <- getOption(data_name)
     if (is.null(local_file)) {
         # temporary file path
-        local_file <- tempfile(pattern = 'cached_', fileext = data_name, tmpdir = cache_dir)
+        local_file <- file.path(cache_dir, data_name)
         # download file
         dl_code <- download.file(url = url, destfile = local_file)
         if (dl_code != 0L) {
