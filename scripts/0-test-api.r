@@ -256,6 +256,12 @@ search_by_datetime <- function(meta_search, from, to, tz = get_tzone(from, to)) 
 # search_by_datetime(from = '01.01.2018', to = '13.08.2020')
 
 search_by_location <- function() {
+    # valid search entries:
+    # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', '46.1//46.2', c(46.1, 46.2), 
+    # ch_x & ch_y: same as above BUT additionally, only 100-thousands 
+    #   -> distinguish between lv95 and lv03
+    #   -> check x/y as required in R and possibly flip
+    # only attach sf if really necessary
 }
 # -> search meta_search$stations
 # TODO:
@@ -501,10 +507,10 @@ yy[[1]]
 
 
 
-xy <- content(GET(ms_url('api/stac/v1/collections/', attr(meta_search, 'collection'), '/items/',
-        tolower(di[[1]][1]))))
-str(xy)
-names(xy$assets)
+# xy <- content(GET(ms_url('api/stac/v1/collections/', attr(meta_search, 'collection'), '/items/',
+#         tolower(di[[1]][1]))))
+# str(xy)
+# names(xy$assets)
 
 
 # TODO: add granularity & parameter group to print.meta_search
