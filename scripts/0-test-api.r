@@ -420,8 +420,10 @@ search_by_parameter <- function(shortname, unit, group, description,
             list(
                 filename = paste(pre, stat, gran, 
                     paste0('historical_', x, '-', x + 9, '.csv'), sep = '_'),
-                from = max(from, cy_jan),
-                to = min(to, yd12)
+                from = max(from, lubridate::parse_date_time2(sprintf('%s-01-01', x), 
+                        orders = '%Y-%m-%d', exact = TRUE)),
+                to = min(to, cy_jan, lubridate::parse_date_time2(
+                        sprintf('%s-01-01', x + 10), orders = '%Y-%m-%d', exact = TRUE))
             )
         }))
     }
