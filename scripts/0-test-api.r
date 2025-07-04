@@ -371,17 +371,24 @@ search_by_parameter <- function(shortname, unit, group, description,
 
 # -> convenience functions => show_stations, show_parameters
 
-.get_filenames <- function(from, to, now, pre, stat, gran, yd12, cy_jan) {
+.get_filenames <- function(x, from, to, now, pre, yd12, cy_jan) {
     # update frequency (https://opendatadocs.meteoswiss.ch/general/download#update-frequency)
     # historical    (meas. start until 31.12 last year): once a year        (m, d, h, t)
     # recent        (1.1. current year until yesterday): daily at 12UTC     (m, d, h, t)
     # now           (yesterday 12UTC to now):            every 10 min       (h, t)
     # no type                                            varies             (e.g. y)
     file_list <- list()
+    # station
+    stat <- tolower(x[['station_abbr']][1])
+    # granularity
+    gran <- tolower(x[['parameter_granularity']][1])
     if (gran == 'y') {
         # -> check file names! => do they always look the same?
         return(paste(pre, stat, 'y.csv', sep = '_'))
     } else if (gran %in% c('t', 'h')) {
+        if (is.na(to)) {
+            to <- now
+        }
         # add yesterday cut
         if (from <= yd12 && to > yd12) {
             file_list <- c(file_list, list(list(
@@ -412,9 +419,13 @@ search_by_parameter <- function(shortname, unit, group, description,
             )
         }))
     }
-    list(file_list)
+    list(
+        station = stat,
+        granularity = gran,
+        parameters = x[['parameter_shortname']],
+        file_list = file_list
+    )
 }
-
 
 # add function to get data
 get_filename <- function(meta_search) {
@@ -436,21 +447,16 @@ get_filename <- function(meta_search) {
     if (is.null(to)) {
         to <- attr(meta_search, 'data_till')
     }
-    if (is.na(to)) {
-        to <- now
-    }
     # prepended filenames
     pre <- sub('ch.meteoschweiz.', '', attr(meta_search, 'collection'), fixed = TRUE)
-    # loop over rows
-    lapply(seq_len(nrow(di)), \(i) {
-        # station
-        stat <- tolower(di[[1]][i])
-        # granularity
-        gran <- tolower(pa[pa$parameter_shortname == di[[2]][i], 'parameter_granularity'])
-        c(
-            as.list(di[i, ]),
-            filenames = .get_filenames(from, to, now, pre, stat, gran, yesterday_12UTC, current_year_jan1)
-        )
+    # loop over station/granularity pairs
+    dat <- merge(di[, c('station_abbr', 'parameter_shortname', 'data_since', 'data_till')],
+        pa[, c('parameter_shortname', 'parameter_granularity')])
+    # split by groups of station/granularity
+    dsplit <- split(dat, paste(dat$station_abbr, dat$parameter_granularity, sep = '/'))
+    # loop over groups
+    lapply(dsplit, \(x) {
+        .get_filenames(x, from, to, now, pre, yesterday_12UTC, current_year_jan1)
     })
 }
 
@@ -458,7 +464,7 @@ get_filename <- function(meta_search) {
 xx <- get_filename(x1)
 
 xx[[1]]
-# -> reduce & group station/granularity parameters!
+
 
 xx <- GET(ms_url('api/stac/v1/collections/', attr(meta_search, 'collection'), '/items/',
         tolower(di[[1]][1])))
