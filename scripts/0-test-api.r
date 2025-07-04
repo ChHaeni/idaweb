@@ -553,14 +553,26 @@ dl_data <- function(url, checksum = NULL, cache_dir = tempdir()) {
     data_name <- basename(url)
     # check if data is already available locally
     local_file <- getOption(data_name)
+    # check if cache_dir matches
+    if (!grepl(cache_dir, local_file, fixed = TRUE)) {
+        warning('file: "', data_name, '" has already been downloaded to "', 
+            dirname(local_file), '".\n -> ignoring cache_dir argument.')
+    }
     if (is.null(local_file)) {
+        # check if directory exists
+        if (!file.exists(cache_dir)) {
+            stop('directory "', cache_dir, '" does not exist!')
+        }
         # temporary file path
         local_file <- file.path(cache_dir, data_name)
-        # download file
-        dl_code <- download.file(url = url, destfile = local_file)
-        if (dl_code != 0L) {
-            stop('Download of file "', url, '" failed with exit code ', dl_code, 
-                call. = FALSE)
+        # check if file exists nevertheless
+        if (!file.exists(local_file)) {
+            # download file
+            dl_code <- download.file(url = url, destfile = local_file)
+            if (dl_code != 0L) {
+                stop('Download of file "', url, '" failed with exit code ', dl_code, 
+                    call. = FALSE)
+            }
         }
         # check checksum if available
         if (!is.null(checksum)) {
