@@ -255,18 +255,19 @@ search_by_datetime <- function(meta_search, from, to, tz = get_tzone(from, to)) 
 # search_by_datetime(to = '13.08.2020')
 # search_by_datetime(from = '01.01.2018', to = '13.08.2020')
 
-search_by_location
+search_by_location <- function() {
+}
 # -> search meta_search$stations
 # TODO:
 #   allow searching by both lv95 & wgs84, even lv03?
 #   => convert between coordinate systems -> use sf?
-sf::st_crs('EPSG:4326')
-sf::st_crs('EPSG:2056')
-sf::st_crs('EPSG:21781')
-x <- cbind(c(600000, 620000), c(200000, 220000))
-x1 <- gel::set_crs(x, 'lv03')
-x2 <- gel::set_crs(x, 'lv95')
-sf::sf_project('EPSG:21781', 'EPSG:4326', x)
+# sf::st_crs('EPSG:4326')
+# sf::st_crs('EPSG:2056')
+# sf::st_crs('EPSG:21781')
+# x <- cbind(c(600000, 620000), c(200000, 220000))
+# x1 <- gel::set_crs(x, 'lv03')
+# x2 <- gel::set_crs(x, 'lv95')
+# sf::sf_project('EPSG:21781', 'EPSG:4326', x)
 
 search_by_parameter <- function(shortname, unit, group, description, 
     language = c('en', 'de', 'fr', 'it'), 
@@ -370,7 +371,103 @@ search_by_parameter <- function(shortname, unit, group, description,
 
 # -> convenience functions => show_stations, show_parameters
 
+.get_filenames <- function(from, to, now, pre, stat, gran, yd12, cy_jan) {
+    # update frequency (https://opendatadocs.meteoswiss.ch/general/download#update-frequency)
+    # historical    (meas. start until 31.12 last year): once a year        (m, d, h, t)
+    # recent        (1.1. current year until yesterday): daily at 12UTC     (m, d, h, t)
+    # now           (yesterday 12UTC to now):            every 10 min       (h, t)
+    # no type                                            varies             (e.g. y)
+    file_list <- list()
+    if (gran == 'y') {
+        # -> check file names! => do they always look the same?
+        return(paste(pre, stat, 'y.csv', sep = '_'))
+    } else if (gran %in% c('t', 'h')) {
+        # add yesterday cut
+        if (from <= yd12 && to > yd12) {
+            file_list <- c(file_list, list(list(
+                    filename = paste(pre, stat, gran, 'now.csv', sep = '_'),
+                    from = max(from, yd12),
+                    to = min(to, now)
+                )))
+        }
+    }
+    # add previous year cut
+    if (from <= cy_jan && to > cy_jan) {
+        file_list <- c(file_list, list(list(
+                filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
+                from = max(from, cy_jan),
+                to = min(to, yd12)
+            )))
+    }
+    # add all previous 10 years
+    if (from < cy_jan) {
+        from_base10 <- floor(lubridate::year(from) / 10) * 10
+        from_bases <- seq(from_base10, lubridate::year(cy_jan), by = 10)
+        hist_ranges <- sapply(from_bases, \(x) paste(x, x + 9, sep = '-'))
+        file_list <- c(file_list, lapply(from_bases, \(x) {
+            list(
+                filename = paste(pre, stat, gran, paste0(x, '-', x + 9, '.csv'), sep = '_'),
+                from = max(from, cy_jan),
+                to = min(to, yd12)
+            )
+        }))
+    }
+    list(file_list)
+}
+
+
 # add function to get data
+get_filename <- function(meta_search) {
+    # meta_search = search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
+    di <- meta_search$datainventory
+    if (nrow(di) == 0) {
+        return(list())
+    }
+    pa <- meta_search$parameters
+    # prepare times
+    now <- lubridate::with_tz(Sys.time(), tz = 'UTC')
+    yesterday_12UTC <- as.POSIXct(trunc(now, 'days') - 12 * 3600)
+    current_year_jan1 <- as.POSIXct(trunc(now, 'years'))
+    from <- attr(meta_search, 'search_from')[1]
+    if (is.null(from)) {
+        from <- attr(meta_search, 'data_since')
+    }
+    to <- attr(meta_search, 'search_from')[2]
+    if (is.null(to)) {
+        to <- attr(meta_search, 'data_till')
+    }
+    if (is.na(to)) {
+        to <- now
+    }
+    # prepended filenames
+    pre <- sub('ch.meteoschweiz.', '', attr(meta_search, 'collection'), fixed = TRUE)
+    # loop over rows
+    lapply(seq_len(nrow(di)), \(i) {
+        # station
+        stat <- tolower(di[[1]][i])
+        # granularity
+        gran <- tolower(pa[pa$parameter_shortname == di[[2]][i], 'parameter_granularity'])
+        c(
+            as.list(di[i, ]),
+            filenames = .get_filenames(from, to, now, pre, stat, gran, yesterday_12UTC, current_year_jan1)
+        )
+    })
+}
+
+# x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
+xx <- get_filename(x1)
+
+xx[[1]]
+# -> reduce & group station/granularity parameters!
+
+xx <- GET(ms_url('api/stac/v1/collections/', attr(meta_search, 'collection'), '/items/',
+        tolower(di[[1]][1])))
+yy <- content(xx)
+str(yy)
+
+names(yy$assets)
+
+# TODO: add granularity & parameter group to print.meta_search
 
 
 ## methods ----------------------------------------
