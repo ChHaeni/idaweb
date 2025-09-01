@@ -255,13 +255,116 @@ search_by_datetime <- function(meta_search, from, to, tz = get_tzone(from, to)) 
 # search_by_datetime(to = '13.08.2020')
 # search_by_datetime(from = '01.01.2018', to = '13.08.2020')
 
-search_by_location <- function() {
+search_by_location <- function(meta_search, x, y) {
     # valid search entries:
-    # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', '46.1//46.2', c(46.1, 46.2), 
+    # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
     # ch_x & ch_y: same as above BUT additionally, only 100-thousands 
     #   -> distinguish between lv95 and lv03
     #   -> check x/y as required in R and possibly flip
     # only attach sf if really necessary
+    # change once package
+    if (missing(meta_search)) {
+        # meta_search <- idaweb:::metadata
+        meta_search <- metadata
+    } else if (is.character(meta_search)) {
+        # ind <- sub('ch.meteoschweiz.ogd-', '', names(idaweb:::metadata)) %in%
+        ind <- sub('ch.meteoschweiz.ogd-', '', names(metadata)) %in%
+            sub('ch.meteoschweiz.ogd-', '', meta_search)
+        if (any(ind)) {
+            # collection name(s)
+            if (length(meta_search) == 1L) {
+                meta_search <- metadata[[which(ind)]]
+            } else {
+                meta_search <- metadata[ind]
+            }
+        } else {
+            meta_search <- switch(meta_search
+                # 'all' = idaweb:::metadata,
+                , 'all' = metadata
+                # any others?
+                # error unknown
+                , stop('cannot interpret argument "meta_search"!')
+            )
+        }
+    }
+    # change argument meta_search to meta_search = idaweb:::metadata or similar argument name
+    seps <- c('..', 'to', '/', '//')
+    # parse x
+    # check list format
+    if (is.list(x)) {
+        stop('Fix list input!')
+        ul <- unique(lengths(x))
+        if (length(ul) > 1 || ul < 1 || ul > 2) {
+            stop('x list input not valid')
+        }
+    }
+    # check separators
+    xl <- strsplit(x, sep = paste(seps, collapse = '|'))
+    # parse y
+    # check list format
+    if (is.list(y)) {
+        stop('Fix list input!')
+        ul <- unique(lengths(y))
+        if (length(ul) > 1 || ul < 1 || ul > 2) {
+            stop('y list input not valid')
+        }
+    }
+    # check separators
+    yl <- strsplit(y, sep = paste(seps, collapse = '|'))
+    # fix coord values
+    xv <- lapply(xl, \(z) {
+        v <- as.numeric(z)
+        if (v < 20) {
+            # lon
+        } else {
+            stop('Fix ch coordinates')
+            # 200/200000, 1200/1200000
+        }
+    })
+    # select datainventory/station/parameters
+    if ('datainventory' %in% names(meta_search)) {
+        if (!is.null(sft <- attr(meta_search, 'search_fromto'))) {
+            # check from
+            fromto[1] <- max(sft[1], fromto[1])
+            # check to
+            fromto[2] <- min(sft[2], fromto[2])
+        }
+        # TODO: improve these if/else tests! and capture errors
+        # check from
+        i_from <- is.na(meta_search$datainventory$data_till) | 
+            fromto[1] <= meta_search$datainventory$data_till
+        # check to
+        i_to <- i_from & meta_search$datainventory$data_since <= fromto[2]
+        # return subset incl from/to
+        sub_inv <- meta_search$datainventory[i_to, ]
+        # get stations
+        sub_stats <- meta_search$stations[meta_search$stations$station_abbr %in% 
+            sub_inv$station_abbr, ]
+        # get parameters
+        sub_paras <- meta_search$parameters[meta_search$parameters$parameter_shortname %in% 
+            sub_inv$parameter_shortname, ]
+        structure(
+            list(
+                assets = meta_search$assets,
+                datainventory = sub_inv,
+                stations = sub_stats,
+                parameters = sub_paras
+            ), 
+            class = 'meta_search', 
+            # get since & till
+            data_since = min(sub_inv$data_since),
+            data_till = max(sub_inv$data_till),
+            wgs84_lat = range(sub_stats$station_coordinates_wgs84_lat),
+            wgs84_lon = range(sub_stats$station_coordinates_wgs84_lon),
+            parameters = unique(sub_paras$parameter_shortname),
+            collection = basename(dirname(meta_search$assets[[1]]$href)),
+            search_fromto = list(fromto = fromto, tz = tz),
+            search_location = attr(meta_search, 'search_location'),
+            search_parameters = attr(meta_search, 'search_parameters')
+        )
+    } else {
+        sapply(meta_search, search_by_location, x = xv, y = yv, simplify = FALSE)
+    }
 }
 # -> search meta_search$stations
 # TODO:
@@ -474,7 +577,7 @@ get_filenames <- function(meta_search) {
 }
 
 # x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
-xx <- get_filenames(x1)
+# xx <- get_filenames(x1)
 
 get_files <- function(x, cache_dir = tempdir()) {
     # check if more than one collection
@@ -511,11 +614,11 @@ get_files <- function(x, cache_dir = tempdir()) {
     ), class = 'dl_files')
 }
 
-yy <- get_files(xx[1:5])
+# yy <- get_files(xx[1:5])
 
-x <- yy[1:2]
+# x <- yy[1:2]
 
-str(x)
+# str(x)
 
 # xy <- content(GET(ms_url('api/stac/v1/collections/', attr(meta_search, 'collection'), '/items/',
 #         tolower(di[[1]][1]))))
@@ -553,7 +656,7 @@ get_data <- function(x, as_DT = TRUE) {
     browser()
 }
 
-zz_data <- get_data(yy)
+# zz_data <- get_data(yy)
 
 # TODO: station_info(zz_data), parameter_info(zz_data)..
 
