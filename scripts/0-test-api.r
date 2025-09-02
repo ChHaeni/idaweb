@@ -653,10 +653,18 @@ get_data <- function(x, as_DT = TRUE) {
         # return
         dout
     })
-    browser()
+    # return list
+    if (!as_DT) {
+        out <- lapply(out, as.data.frame)
+    }
+    out
 }
 
-# zz_data <- get_data(yy)
+x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
+# TODO: pass parameter/station info down the stream
+xx <- get_filenames(x1)
+yy <- get_files(xx[1:5])
+zz_data <- get_data(yy)
 
 # TODO: station_info(zz_data), parameter_info(zz_data)..
 
@@ -719,10 +727,6 @@ dl_data <- function(url, checksum = NULL, cache_dir = tempdir()) {
     # check if data is already available locally
     local_file <- getOption(data_name)
     # check if cache_dir matches
-    if (!grepl(cache_dir, local_file, fixed = TRUE)) {
-        warning('file: "', data_name, '" has already been downloaded to "', 
-            dirname(local_file), '".\n -> ignoring cache_dir argument.')
-    }
     if (is.null(local_file)) {
         # check if directory exists
         if (!file.exists(cache_dir)) {
@@ -747,11 +751,15 @@ dl_data <- function(url, checksum = NULL, cache_dir = tempdir()) {
             # get checksum
             if (sub('^1220', '', checksum) != 
                 as.character(openssl::sha256(file(local_file)))) {
-                stop('checksum does not match provided "file:checksum"!')
+                warning('checksum of file "', local_file ,
+                    '" does not match provided "file:checksum"!')
             }
         }
         # add path to options
         options(setNames(list(local_file), data_name))
+    } else if (!grepl(cache_dir, local_file, fixed = TRUE)) {
+        warning('file: "', data_name, '" has already been downloaded to "', 
+            dirname(local_file), '".\n -> ignoring cache_dir argument.')
     }
     # return path
     invisible(local_file)
