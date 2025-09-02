@@ -288,7 +288,7 @@ search_by_location <- function(meta_search, x, y) {
         }
     }
     # change argument meta_search to meta_search = idaweb:::metadata or similar argument name
-    seps <- c('..', 'to', '/', '//')
+    seps <- c('[.][.]', 'to', '/', '//')
     # parse x
     # check list format
     if (is.list(x)) {
@@ -299,7 +299,7 @@ search_by_location <- function(meta_search, x, y) {
         }
     }
     # check separators
-    xl <- strsplit(x, sep = paste(seps, collapse = '|'))
+    xl <- strsplit(x, split = paste(seps, collapse = '|'))
     # parse y
     # check list format
     if (is.list(y)) {
@@ -310,36 +310,47 @@ search_by_location <- function(meta_search, x, y) {
         }
     }
     # check separators
-    yl <- strsplit(y, sep = paste(seps, collapse = '|'))
+    yl <- strsplit(y, split = paste(seps, collapse = '|'))
     # fix coord values
     xv <- lapply(xl, \(z) {
         v <- as.numeric(z)
-        if (v < 20) {
+        if (all(v < 20)) {
             # lon
+            # v is ok
         } else {
             stop('Fix ch coordinates')
             # 200/200000, 1200/1200000
         }
+        v
+    })
+    yv <- lapply(yl, \(z) {
+        v <- as.numeric(z)
+        if (all(v > 20 & v < 50)) {
+            # lon
+            # v is ok
+        } else {
+            stop('Fix ch coordinates')
+            # 200/200000, 1200/1200000
+        }
+        v
     })
     # select datainventory/station/parameters
     if ('datainventory' %in% names(meta_search)) {
-        if (!is.null(sft <- attr(meta_search, 'search_fromto'))) {
-            # check from
-            fromto[1] <- max(sft[1], fromto[1])
-            # check to
-            fromto[2] <- min(sft[2], fromto[2])
+        if (!is.null(sft <- attr(meta_search, 'search_location'))) {
+            stop('Fix already searched by location')
         }
         # TODO: improve these if/else tests! and capture errors
         # check from
-        i_from <- is.na(meta_search$datainventory$data_till) | 
-            fromto[1] <= meta_search$datainventory$data_till
-        # check to
-        i_to <- i_from & meta_search$datainventory$data_since <= fromto[2]
-        # return subset incl from/to
-        sub_inv <- meta_search$datainventory[i_to, ]
-        # get stations
-        sub_stats <- meta_search$stations[meta_search$stations$station_abbr %in% 
-            sub_inv$station_abbr, ]
+        s_lon <- meta_search$stations$station_coordinates_wgs84_lon 
+        s_lat <- meta_search$stations$station_coordinates_wgs84_lat 
+        i_x <- unlist(lapply(xv, \(v) s_lon >= v[1] & s_lon <= v[2]))
+        i_y <- unlist(lapply(yv, \(v) s_lat >= v[1] & s_lat <= v[2]))
+        i_ok <- i_x & i_y
+        # return subset of stations
+        sub_stats <- meta_search$stations[i_ok, ]
+        # get inventory
+        sub_inv <- meta_search$datainventory[meta_search$datainventory$station_abbr 
+            %in% sub_stats$station_abbr, ]
         # get parameters
         sub_paras <- meta_search$parameters[meta_search$parameters$parameter_shortname %in% 
             sub_inv$parameter_shortname, ]
@@ -358,8 +369,8 @@ search_by_location <- function(meta_search, x, y) {
             wgs84_lon = range(sub_stats$station_coordinates_wgs84_lon),
             parameters = unique(sub_paras$parameter_shortname),
             collection = basename(dirname(meta_search$assets[[1]]$href)),
-            search_fromto = list(fromto = fromto, tz = tz),
-            search_location = attr(meta_search, 'search_location'),
+            search_fromto = attr(meta_search, 'search_fromto'),
+            search_location = list(x = x, y = y),
             search_parameters = attr(meta_search, 'search_parameters')
         )
     } else {
@@ -632,7 +643,9 @@ get_data <- function(x, as_DT = TRUE) {
     out <- lapply(x[-1], \(sp) {
         # time format
         time_format <- switch(sp$granularity
+            , 'h' = 
             , 't' = '%d.%m.%Y %H:%M'
+            , stop('fix current granularity in `get_data()`')
         )
         # loop over files
         d_list <- lapply(sp$file_list, \(fl) {
@@ -660,16 +673,32 @@ get_data <- function(x, as_DT = TRUE) {
     out
 }
 
-x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
-# TODO: pass parameter/station info down the stream
-xx <- get_filenames(x1)
-yy <- get_files(xx[1:5])
-zz_data <- get_data(yy)
+if (FALSE) {
+    # x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
+    # # TODO: pass parameter/station info down the stream
+    # xx <- get_filenames(x1)
+    # yy <- get_files(xx[1:5])
+    # zz_data <- get_data(yy)
 
-# TODO: station_info(zz_data), parameter_info(zz_data)..
+    # TODO: station_info(zz_data), parameter_info(zz_data)..
 
-# TODO: add granularity & parameter group to print.meta_search
+    # TODO: add granularity & parameter group to print.meta_search
 
+    x1 <- search_by_parameter(group = c('wind', 'temperature'), granularity = 'H', meta_search = metadata[[7]])
+    x1$parameter
+    x2 <- search_by_parameter(shortname = c('fkl010h0', 'tre200h0'), granularity = 'H', 
+        meta_search = metadata[[7]])
+
+    # Zollikofen
+    # 2'601'931.15, 1'204'410.72
+    # 46.990755, 7.464018
+    xz <- search_by_location(x2, '7.43..7.49', '46.96..47.12')
+    xx <- get_filenames(xz)
+    yy <- get_files(xx)
+    zz_data <- get_data(yy)
+    # qs2::qd_save(zz_data[[1]], '~/repos/5_GitHub/agrammon-workbench/alfam2/zol-temp-ws.qdata')
+
+}
 
 ## methods ----------------------------------------
 
