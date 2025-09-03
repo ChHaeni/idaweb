@@ -684,8 +684,15 @@ if (FALSE) {
 
     # TODO: add granularity & parameter group to print.meta_search
 
-    x1 <- search_by_parameter(group = c('wind', 'temperature'), granularity = 'H', meta_search = metadata[[7]])
-    x1$parameter
+    # x1 <- search_by_parameter(group = c('wind', 'temperature'), granularity = 'H', meta_search = metadata[[7]])
+    # x1$parameter
+
+    x1 <- search_by_parameter(shortname = c('fkl010h0', 'tre200h0'), granularity = 'H', meta_search = metadata[[7]])
+    head(x1$stations[, 1:16])
+    nrow(x1$stations)
+    names(x1$stations)
+    # qs2::qd_save(x1$stations[, 1:16], '~/repos/5_GitHub/agrammon-workbench/alfam2/idaweb-stations.qdata')
+
     x2 <- search_by_parameter(shortname = c('fkl010h0', 'tre200h0'), granularity = 'H', 
         meta_search = metadata[[7]])
 
