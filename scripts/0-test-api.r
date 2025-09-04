@@ -29,6 +29,12 @@ meta_stations <- get_metadata(sup, 'stat', cache_dir = path_cache)
 meta_parameters <- get_metadata(sup, 'par', cache_dir = path_cache)
 get_metadata(sup[1])
 
+metadata[[1]][[1]]
+metadata[[1]][[2]]
+metadata[[1]][[3]]
+metadata[[1]][[4]]
+metadata[[1]]
+
 ## hier weiter!!!
 # TODO:
 #   search functions

@@ -708,6 +708,82 @@ print.meta_search <- function(x, ...) {
     invisible()
 }
 
+# print methods for meta data
+print.ms_assets <- function(x, ...) {
+    ncs <- nchar(nms <- names(x))
+    names(ncs) <- nms
+    cat('-- assets --\n')
+    for (nm in nms) {
+        sadd <- paste(rep(' ', max(ncs) - ncs[nm] + 1), collapse = '')
+        cat(nm, sadd, 'last updated:', x[[nm]][['updated']], '\n')
+    }
+    invisible()
+}
+
+print.ms_datainventory <- function(x, ...) {
+    cat('-- datainventory --\n')
+    cat('Number of data:', length(x[[1]]), '\n')
+    cat('Number of stations: ', length(unique(x[[1]])), '\n')
+    cat('Number of parameters:', length(unique(x[[2]])), '\n')
+    print_dense(x, ...)
+}
+
+print.ms_stations <- function(x, ...) {
+    cat('-- stations --\n')
+    cat('Number of stations:', length(x[[1]]), '\n')
+    print_dense(x, ...)
+}
+
+print.ms_parameters <- function(x, ...) {
+    cat('-- parameters --\n')
+    cat('Number of parameters:', length(x[[1]]), '\n')
+    cat('Granularities:', unique(x[['parameter_granularity']]), '\n')
+    print_dense(x, ...)
+}
+
+print.ms_metadata <- function(x, ...) {
+    cat('-- meta data --\n')
+    ncs <- nchar(nms <- names(x[[1]]))
+    names(ncs) <- nms
+    for (nm in nms) {
+        sadd <- paste(rep(' ', max(ncs) - ncs[nm] + 1), collapse = '')
+        cat(sub('.+_meta_(.+)[.]csv', '\\1', nm), sadd, 'last updated:', 
+            sub('T.+', '', x[[1]][[nm]][['updated']]), '\n')
+    }
+    cat('Number of stations:', length(x[[3]][[1]]), '\n')
+    cat('Number of parameters:', length(x[[4]][[1]]), '\n')
+    cat('Granularities:', unique(x[[4]][['parameter_granularity']]), '\n')
+    print_dense(x[[2]], ...)
+}
+
+print_dense <- function(x, ntop = 6, nbottom = ntop, center_sep = '---',
+    nchars = 10) {
+    if (is.list(x)) {
+        x <- unclass(x)
+    }
+    x <- as.data.frame(x)
+    if (nrow(x) <= ntop + nbottom) {
+        print(x)
+        return(invisible())
+    }
+    xtop <- head(x, ntop)
+    xbot <- tail(x, nbottom)
+    xout <- rbind(
+        as.data.frame(lapply(xtop, as.character)),
+        rep(center_sep, ncol(x)),
+        as.data.frame(lapply(xbot, as.character))
+    )
+    xout <- as.data.frame(lapply(xout, \(z) {
+        pat <- paste0('\\s*(\\S.{', nchars - 1, '}).+')
+        sub(pat, '\\1..', z)
+    }))
+    row.names(xout)[ntop + 1] <- ' '
+    row.names(xout)[ntop + 1 + seq_len(nbottom)] <- row.names(xbot)
+    print.data.frame(xout, quote = FALSE)
+}
+# print_dense(metadata[[1]][[2]])
+
+
 ##  • helper functions ====================
 
 # helper function to download data
