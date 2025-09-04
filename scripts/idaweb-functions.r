@@ -86,10 +86,14 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                 format = "%Y-%m-%dT%H:%M:%OSZ", lt = FALSE
             )
             # check if package data is up-to-date
-            # if (last_updated > idaweb:::metadata[[id]]$assets[[file_name]]$updated) {
-            # replace me when package
             load('data/metadata.rda')
-            if (last_updated > metadata[[id]]$assets[[file_name]]$updated) {
+            meta_last_updated <- lubridate::fast_strptime(
+                # idaweb:::metadata[[id]]$assets[[file_name]]$updated,
+                # replace me when package
+                metadata[[id]]$assets[[file_name]]$updated,
+                format = "%Y-%m-%dT%H:%M:%OSZ", lt = FALSE
+            )
+            if (last_updated > meta_last_updated) {
                 # update data...
                 # get url & checksum
                 file_url <- id_coll$assets[[file_name]]$href
@@ -126,15 +130,17 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                 )
                 return(out)
             }
-            # return(idaweb:::metadata[[id]][[file_name]])
+            nm <- sub('.+_meta_(.+)[.]csv', '\\1', file_name)
+            # return(idaweb:::metadata[[id]][[nm]])
             # replace me when package
-            return(metadata[[id]][[file_name]])
+            return(metadata[[id]][[nm]])
         } else {
             return(invisible(NULL))
         }
     } else {
         # get data
         out <- lapply(id, get_metadata, type = type, cache_dir = cache_dir)
+        names(out) <- id
         # remove invalid
         return(out[!sapply(out, is.null)])
     }
@@ -757,31 +763,42 @@ print.ms_metadata <- function(x, ...) {
 }
 
 print_dense <- function(x, ntop = 6, nbottom = ntop, center_sep = '---',
-    nchars = 10) {
+    nchars = 10, strict = FALSE) {
     if (is.list(x)) {
         x <- unclass(x)
     }
     x <- as.data.frame(x)
     if (nrow(x) <= ntop + nbottom) {
-        print(x)
-        return(invisible())
+        xshort <- x
+    } else {
+        xtop <- head(x, ntop)
+        xbot <- tail(x, nbottom)
+        xshort <- rbind(
+            as.data.frame(lapply(xtop, as.character)),
+            rep(center_sep, ncol(x)),
+            as.data.frame(lapply(xbot, as.character))
+        )
+        row.names(xshort)[ntop + 1] <- ' '
+        row.names(xshort)[ntop + 1 + seq_len(nbottom)] <- row.names(xbot)
     }
-    xtop <- head(x, ntop)
-    xbot <- tail(x, nbottom)
-    xout <- rbind(
-        as.data.frame(lapply(xtop, as.character)),
-        rep(center_sep, ncol(x)),
-        as.data.frame(lapply(xbot, as.character))
-    )
-    xout <- as.data.frame(lapply(xout, \(z) {
-        pat <- paste0('\\s*(\\S.{', nchars - 1, '}).+')
-        sub(pat, '\\1..', z)
-    }))
-    row.names(xout)[ntop + 1] <- ' '
-    row.names(xout)[ntop + 1 + seq_len(nbottom)] <- row.names(xbot)
+    if (strict) {
+        xout <- as.data.frame(lapply(xshort, \(z) {
+            pat <- paste0('\\s*(\\S.{', nchars - 1, '}).+')
+            sub(pat, '\\1..', z)
+        }))
+    } else {
+        xout <- as.data.frame(lapply(names(xshort), \(z) {
+            N <- max(nchars, nchar(z) - 4)
+            pat <- paste0('\\s*(\\S.{', N - 1, '}).+')
+            sub(pat, '\\1..', xshort[[z]])
+        }))
+        names(xout) <- names(xshort)
+    }
+    row.names(xout) <- row.names(xshort)
     print.data.frame(xout, quote = FALSE)
 }
 # print_dense(metadata[[1]][[2]])
+# meta_parameters[[10]]
 
 
 ##  • helper functions ====================
