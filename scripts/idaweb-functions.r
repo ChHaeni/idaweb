@@ -98,7 +98,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                     # TODO: add message about github issue (only first time if local
                     #           file does not exist yet)
                     # cat()
-                    warning('TODO here!')
+                    warning(file_name, ' has recent changes: metadata.rda in package needs updating!')
                     # ?
                 }
                 # download file
