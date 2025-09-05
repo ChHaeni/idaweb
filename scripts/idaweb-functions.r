@@ -222,6 +222,21 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
         # get parameters
         sub_paras <- meta_data$parameters[meta_data$parameters$parameter_shortname %in% 
             sub_inv$parameter_shortname, ]
+        if (nrow(sub_inv) > 0) {
+            data_since <- min(sub_inv$data_since)
+            data_till <- max(sub_inv$data_till)
+            wgs84_lat <- range(sub_stats$station_coordinates_wgs84_lat)
+            wgs84_lon <- range(sub_stats$station_coordinates_wgs84_lon)
+            parameters <- unique(sub_paras$parameter_shortname)
+            stations <- unique(sub_stats$station_abbr)
+        } else {
+            data_since <- lubridate::NA_POSIXct_
+            data_till <- NA_integer_
+            wgs84_lat <- c(NA_real_, NA_real_)
+            wgs84_lon <- c(NA_real_, NA_real_)
+            parameters <- NA_character_
+            stations <- NA_character_
+        }
         structure(
             list(
                 assets = meta_data$assets,
@@ -233,12 +248,12 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
             # pass collection
             collection = attr(meta_data, 'collection'),
             # update further attributes
-            stations = unique(sub_stats$station_abbr),
-            wgs84_lat = range(sub_stats$station_coordinates_wgs84_lat),
-            wgs84_lon = range(sub_stats$station_coordinates_wgs84_lon),
-            parameters = unique(sub_paras$parameter_shortname),
-            data_since = min(sub_inv$data_since),
-            data_till = max(sub_inv$data_till),
+            stations = stations,
+            wgs84_lat = wgs84_lat,
+            wgs84_lon = wgs84_lon,
+            parameters = parameters,
+            data_since = data_since,
+            data_till = data_till,
             search_fromto = fromto,
             search_location = attr(meta_data, 'search_location'),
             search_parameters = attr(meta_data, 'search_parameters')
@@ -249,85 +264,20 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
     }
 }
 
-search_by_location <- function(meta_data, x, y) {
+search_by_location <- function(x, y, meta_data = metadata) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
     # ch_x & ch_y: same as above BUT additionally, only 100-thousands 
     #   -> distinguish between lv95 and lv03
     #   -> check x/y as required in R and possibly flip
     # only attach sf if really necessary
-    # change once package
-    if (missing(meta_data)) {
-        # meta_data <- idaweb:::metadata
-        meta_data <- metadata
-    } else if (is.character(meta_data)) {
-        # ind <- sub('ch.meteoschweiz.ogd-', '', names(idaweb:::metadata)) %in%
-        ind <- sub('ch.meteoschweiz.ogd-', '', names(metadata)) %in%
-            sub('ch.meteoschweiz.ogd-', '', meta_data)
-        if (any(ind)) {
-            # collection name(s)
-            if (length(meta_data) == 1L) {
-                meta_data <- metadata[[which(ind)]]
-            } else {
-                meta_data <- metadata[ind]
-            }
-        } else {
-            meta_data <- switch(meta_data
-                # 'all' = idaweb:::metadata,
-                , 'all' = metadata
-                # any others?
-                # error unknown
-                , stop('cannot interpret argument "meta_data"!')
-            )
-        }
-    }
+    # fix meta argument
+    meta_data <- fix_meta_arg(meta_data)
     # change argument meta_data to meta_data = idaweb:::metadata or similar argument name
-    seps <- c('[.][.]', 'to', '/', '//')
     # parse x
-    # check list format
-    if (is.list(x)) {
-        stop('Fix list input!')
-        ul <- unique(lengths(x))
-        if (length(ul) > 1 || ul < 1 || ul > 2) {
-            stop('x list input not valid')
-        }
-    }
-    # check separators
-    xl <- strsplit(x, split = paste(seps, collapse = '|'))
+    xv <- check_xy_arg(x)
     # parse y
-    # check list format
-    if (is.list(y)) {
-        stop('Fix list input!')
-        ul <- unique(lengths(y))
-        if (length(ul) > 1 || ul < 1 || ul > 2) {
-            stop('y list input not valid')
-        }
-    }
-    # check separators
-    yl <- strsplit(y, split = paste(seps, collapse = '|'))
-    # fix coord values
-    xv <- lapply(xl, \(z) {
-        v <- as.numeric(z)
-        if (all(v < 20)) {
-            # lon
-            # v is ok
-        } else {
-            stop('Fix ch coordinates')
-            # 200/200000, 1200/1200000
-        }
-        v
-    })
-    yv <- lapply(yl, \(z) {
-        v <- as.numeric(z)
-        if (all(v > 20 & v < 50)) {
-            # lon
-            # v is ok
-        } else {
-            stop('Fix ch coordinates')
-            # 200/200000, 1200/1200000
-        }
-        v
-    })
+    yv <- check_xy_arg(y)
     # select datainventory/station/parameters
     if ('datainventory' %in% names(meta_data)) {
         if (!is.null(sft <- attr(meta_data, 'search_location'))) {
@@ -348,6 +298,21 @@ search_by_location <- function(meta_data, x, y) {
         # get parameters
         sub_paras <- meta_data$parameters[meta_data$parameters$parameter_shortname %in% 
             sub_inv$parameter_shortname, ]
+        if (nrow(sub_inv) > 0) {
+            data_since <- min(sub_inv$data_since)
+            data_till <- max(sub_inv$data_till)
+            wgs84_lat <- range(sub_stats$station_coordinates_wgs84_lat)
+            wgs84_lon <- range(sub_stats$station_coordinates_wgs84_lon)
+            parameters <- unique(sub_paras$parameter_shortname)
+            stations <- unique(sub_stats$station_abbr)
+        } else {
+            data_since <- lubridate::NA_POSIXct_
+            data_till <- NA_integer_
+            wgs84_lat <- c(NA_real_, NA_real_)
+            wgs84_lon <- c(NA_real_, NA_real_)
+            parameters <- NA_character_
+            stations <- NA_character_
+        }
         structure(
             list(
                 assets = meta_data$assets,
@@ -355,14 +320,16 @@ search_by_location <- function(meta_data, x, y) {
                 stations = sub_stats,
                 parameters = sub_paras
             ), 
-            class = 'meta_data', 
-            # get since & till
-            data_since = min(sub_inv$data_since),
-            data_till = max(sub_inv$data_till),
-            wgs84_lat = range(sub_stats$station_coordinates_wgs84_lat),
-            wgs84_lon = range(sub_stats$station_coordinates_wgs84_lon),
-            parameters = unique(sub_paras$parameter_shortname),
-            collection = basename(dirname(meta_data$assets[[1]]$href)),
+            class = 'ms_metadata', 
+            # pass collection
+            collection = attr(meta_data, 'collection'),
+            # update further attributes
+            stations = stations,
+            wgs84_lat = wgs84_lat,
+            wgs84_lon = wgs84_lon,
+            parameters = parameters,
+            data_since = data_since,
+            data_till = data_till,
             search_fromto = attr(meta_data, 'search_fromto'),
             search_location = list(x = x, y = y),
             search_parameters = attr(meta_data, 'search_parameters')
@@ -371,17 +338,56 @@ search_by_location <- function(meta_data, x, y) {
         sapply(meta_data, search_by_location, x = xv, y = yv, simplify = FALSE)
     }
 }
-# -> search meta_data$stations
-# TODO:
-#   allow searching by both lv95 & wgs84, even lv03?
-#   => convert between coordinate systems -> use sf?
-# sf::st_crs('EPSG:4326')
-# sf::st_crs('EPSG:2056')
-# sf::st_crs('EPSG:21781')
-# x <- cbind(c(600000, 620000), c(200000, 220000))
-# x1 <- gel::set_crs(x, 'lv03')
-# x2 <- gel::set_crs(x, 'lv95')
-# sf::sf_project('EPSG:21781', 'EPSG:4326', x)
+
+check_xy_arg <- function(xy) {
+    xy_nm <- deparse(substitute(xy))
+    if (is.list(xy) && all(sapply(xy, is.numeric)) &&
+        unique(lengths(xy)) == 2L) {
+        return(xy)
+    }
+    if (is.numeric(xy)) {
+        if (length(xy) != 2) {
+            stop('if argument', xy_nm, 'is numeric, length must be 2 (use -Inf/Inf for open limits)')
+        }
+        v_out <- list(xy)
+    } else {
+        # define valid separators
+        seps <- c('[.][.]', 'to', '/', '//')
+        # check list format
+        if (is.list(xy)) {
+            stop('Fix list input!')
+            ul <- unique(lengths(xy))
+            if (length(ul) > 1 || ul < 1 || ul > 2) {
+                stop('list input not valid')
+            }
+        }
+        # check separators
+        xyl <- strsplit(xy, split = paste(seps, collapse = '|'))
+        # get limits
+        switch(xy_nm
+            , x = {
+                wgs_lims <- c(4, 12)
+            }
+            , y = {
+                wgs_lims <- c(42, 50)
+            }
+        )
+        # fix coord values
+        v_out <- lapply(xyl, \(z) {
+            v <- as.numeric(z)
+            if (all(v > wgs_lims[1] & v < wgs_lims[2])) {
+                # lon
+                # v is ok
+            } else {
+                stop('Fix ch coordinates')
+                # 200/200000, 1200/1200000
+            }
+            v
+        })
+    }
+    # return list of values
+    v_out
+}
 
 search_by_parameter <- function(shortname, unit, group, description, 
     language = c('en', 'de', 'fr', 'it'), 
@@ -437,12 +443,14 @@ search_by_parameter <- function(shortname, unit, group, description,
             wgs84_lat <- range(sub_stats$station_coordinates_wgs84_lat)
             wgs84_lon <- range(sub_stats$station_coordinates_wgs84_lon)
             parameters <- unique(sub_paras$parameter_shortname)
+            stations <- unique(sub_stats$station_abbr)
         } else {
             data_since <- lubridate::NA_POSIXct_
             data_till <- NA_integer_
             wgs84_lat <- c(NA_real_, NA_real_)
             wgs84_lon <- c(NA_real_, NA_real_)
             parameters <- NA_character_
+            stations <- NA_character_
         }
         structure(
             list(
@@ -455,7 +463,7 @@ search_by_parameter <- function(shortname, unit, group, description,
             # pass collection
             collection = attr(meta_data, 'collection'),
             # update further attributes
-            stations = unique(sub_stats$station_abbr),
+            stations = stations,
             wgs84_lat = wgs84_lat,
             wgs84_lon = wgs84_lon,
             parameters = parameters,
@@ -660,37 +668,6 @@ get_data <- function(x, as_DT = TRUE) {
     out
 }
 
-if (FALSE) {
-    # x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_data = metadata[[7]])
-    # # TODO: pass parameter/station info down the stream
-    # xx <- get_filenames(x1)
-    # yy <- get_files(xx[1:5])
-    # zz_data <- get_data(yy)
-
-    # TODO: station_info(zz_data), parameter_info(zz_data)..
-
-    # x1 <- search_by_parameter(group = c('wind', 'temperature'), granularity = 'H', meta_data = metadata[[7]])
-    # x1$parameter
-
-    x1 <- search_by_parameter(shortname = c('fkl010h0', 'tre200h0'), granularity = 'H', meta_data = metadata[[7]])
-    head(x1$stations[, 1:16])
-    nrow(x1$stations)
-    names(x1$stations)
-    # qs2::qd_save(x1$stations[, 1:16], '~/repos/5_GitHub/agrammon-workbench/alfam2/idaweb-stations.qdata')
-
-    x2 <- search_by_parameter(shortname = c('fkl010h0', 'tre200h0'), granularity = 'H', 
-        meta_data = metadata[[7]])
-
-    # Zollikofen
-    # 2'601'931.15, 1'204'410.72
-    # 46.990755, 7.464018
-    xz <- search_by_location(x2, '7.43..7.49', '46.96..47.12')
-    xx <- get_filenames(xz)
-    yy <- get_files(xx)
-    zz_data <- get_data(yy)
-    # qs2::qd_save(zz_data[[1]], '~/repos/5_GitHub/agrammon-workbench/alfam2/zol-temp-ws.qdata')
-
-}
 
 ## methods ----------------------------------------
 
@@ -759,8 +736,11 @@ print.ms_metadata <- function(x, ...) {
     } else {
         data_till <- format(data_till)
     }
-    # fix lon
-    lon <- sub('^0', ' ', sprintf('%09.6f', attr(x, 'wgs84_lon')))
+    # fix lon 
+    # lon <- sub('^0', ' ', sprintf('%09.6f', attr(x, 'wgs84_lon')))
+    # show only 3 digits (1e-3° ≈ 100 m)
+    lon <- sub('^0', ' ', sprintf('%06.3f', attr(x, 'wgs84_lon')))
+    lat <- sprintf('%06.3f', attr(x, 'wgs84_lat'))
     # get collection info
     col <- attr(x, 'collection')
     # cat('~~~\n')
@@ -782,7 +762,7 @@ print.ms_metadata <- function(x, ...) {
     cat('  data since', format(attr(x, 'data_since')), '\n')
     cat('  data until', data_till, '\n')
     cat('  wgs84 lon:', paste(lon, collapse = ' .. '), '\n')
-    cat('  wgs84 lat:', paste(attr(x, 'wgs84_lat'), collapse = ' .. '), '\n')
+    cat('  wgs84 lat:', paste(lat, collapse = ' .. '), '\n')
     cat('  param. groups:', groups, '\n')
     cat('  granularities:', unique(x[['parameters']][['parameter_granularity']]), '\n')
     # check search attributes

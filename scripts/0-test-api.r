@@ -64,9 +64,27 @@ pz0 <- search_by_datetime(from = '07.02.2024/08.03.2025', meta_data = pp0)
 # x3 <- search_by_parameter(meta_data = metadata[[7]], granularity = c('T', 'H'),
 #     description = 'geschw skal m/s', language = 'de')
 
-# add option to provide previous results for further subsetting
-# add function to bind different results together
-# add function to get data from results
+##  • search by location ====================
+
+# Zollikofen
+# 2'601'931.15, 1'204'410.72
+# 46.990755, 7.464018
+ll0 <- search_by_location('7.43..7.49', '46.96..47.12')
+ll1 <- search_by_location('7.43..', '..47.12')
+
+# -> search meta_data$stations
+# TODO:
+#   allow searching by both lv95 & wgs84, even lv03?
+#   => convert between coordinate systems -> use sf?
+# sf::st_crs('EPSG:4326')
+# sf::st_crs('EPSG:2056')
+# sf::st_crs('EPSG:21781')
+# x <- cbind(c(600000, 620000), c(200000, 220000))
+# x1 <- gel::set_crs(x, 'lv03')
+# x2 <- gel::set_crs(x, 'lv95')
+# sf::sf_project('EPSG:21781', 'EPSG:4326', x)
+
+# TODO: add function to bind different results together
 
 ## testing ----------------------------------------
 
@@ -110,4 +128,36 @@ pz0 <- search_by_datetime(from = '07.02.2024/08.03.2025', meta_data = pp0)
 # for higher granularities (d, m and y) the time stamp defines the beginning of the interval!
 
 # Missing values (e.g. due to instrument failure) are empty fields. 
-# Empty columns are used when a parameter is not measured at all at a certain station.
+# Empty columns are used
+
+if (FALSE) {
+    # x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_data = metadata[[7]])
+    # # TODO: pass parameter/station info down the stream
+    # xx <- get_filenames(x1)
+    # yy <- get_files(xx[1:5])
+    # zz_data <- get_data(yy)
+
+    # TODO: station_info(zz_data), parameter_info(zz_data)..
+
+    # x1 <- search_by_parameter(group = c('wind', 'temperature'), granularity = 'H', meta_data = metadata[[7]])
+    # x1$parameter
+
+    x1 <- search_by_parameter(shortname = c('fkl010h0', 'tre200h0'), granularity = 'H', meta_data = metadata[[7]])
+    head(x1$stations[, 1:16])
+    nrow(x1$stations)
+    names(x1$stations)
+    # qs2::qd_save(x1$stations[, 1:16], '~/repos/5_GitHub/agrammon-workbench/alfam2/idaweb-stations.qdata')
+
+    x2 <- search_by_parameter(shortname = c('fkl010h0', 'tre200h0'), granularity = 'H', 
+        meta_data = metadata[[7]])
+
+    # Zollikofen
+    # 2'601'931.15, 1'204'410.72
+    # 46.990755, 7.464018
+    xz <- search_by_location(x2, '7.43..7.49', '46.96..47.12')
+    xx <- get_filenames(xz)
+    yy <- get_files(xx)
+    zz_data <- get_data(yy)
+    # qs2::qd_save(zz_data[[1]], '~/repos/5_GitHub/agrammon-workbench/alfam2/zol-temp-ws.qdata')
+
+} when a parameter is not measured at all at a certain station.
