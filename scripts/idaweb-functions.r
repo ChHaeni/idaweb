@@ -991,9 +991,9 @@ if (FALSE) {
     metadata <- mapply(\(col, inv, stat, para) {
         structure(list(
             assets = structure(col$assets, class = 'ms_assets'),
-            datainventory = structure(inv, class = 'ms_datainventory'),
-            stations = structure(stat, class = 'ms_stations'),
-            parameters = structure(para, class = 'ms_parameters')
+            datainventory = structure(inv, class = c('ms_datainventory', 'data.frame')),
+            stations = structure(stat, class = c('ms_stations', 'data.frame')),
+            parameters = structure(para, class = c('ms_parameters', 'data.frame'))
         ), class = 'ms_metadata')}, attr(sup, 'collections'), meta_datainv, 
         meta_stations, meta_parameters, SIMPLIFY = FALSE)
     names(metadata) <- sup
