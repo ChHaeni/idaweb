@@ -39,10 +39,10 @@ metadata[[1]]
 
 ##  • search by datetime ====================
 
-zz0 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[7])
-zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[10])
-zz1b <- search_by_datetime('01.01.2017 to 01.02.2018', meta_search = zz1)
-zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata)
+zz0 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_data = metadata[7])
+zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_data = metadata[10])
+zz1b <- search_by_datetime('01.01.2017 to 01.02.2018', meta_data = zz1)
+zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_data = metadata)
 # search_by_datetime('13.08.2020', '01.01.2018') # -> no longer an error
 zz3 <- search_by_datetime('all', '13.08.2020', tz = 'CET', to = '14.08.2020')
 # search_by_datetime('07.02.2024/08.03.2025') # -> no longer an error
@@ -51,15 +51,17 @@ zz4 <- search_by_datetime(from = '07.02.2024/08.03.2025')
 # search_by_datetime(from = '01.01.2018', to = '13.08.2020')
 
 
-# zz1 <- search_by_datetime(metadata[[7]], '01.01.2018 to 05.02.2018')
-# x3 <- search_by_parameter(meta_search = metadata[[7]], granularity = c('T', 'H'),
-#     description = 'geschw skal m/s', language = 'de')
+##  • search by parameter ====================
+
+pp0 <- search_by_parameter(meta_data = metadata[[7]], granularity = c('T', 'H'),
+    description = 'geschw skal m/s', language = 'de')
+pz0 <- search_by_datetime(from = '07.02.2024/08.03.2025', meta_data = pp0)
 
 # xx <- search_by_parameter(group = 'wind', granularity = 'T')
-# x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_search = metadata[[7]])
-# x2 <- search_by_parameter(group = 'Wind', granularity = 'T', meta_search = metadata[[7]],
+# x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_data = metadata[[7]])
+# x2 <- search_by_parameter(group = 'Wind', granularity = 'T', meta_data = metadata[[7]],
 #     description = 'geschw skal m/s', language = 'de')
-# x3 <- search_by_parameter(meta_search = metadata[[7]], granularity = c('T', 'H'),
+# x3 <- search_by_parameter(meta_data = metadata[[7]], granularity = c('T', 'H'),
 #     description = 'geschw skal m/s', language = 'de')
 
 # add option to provide previous results for further subsetting
