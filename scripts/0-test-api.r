@@ -18,6 +18,8 @@ if (!dir.exists(path_cache)) {
 
 ## testing ----------------------------------------
 
+##  • collections & meta data ====================
+
 # check supported collections from MeteoSwiss
 sup <- supported_collections()
 sup
@@ -35,14 +37,17 @@ metadata[[1]][[3]]
 metadata[[1]][[4]]
 metadata[[1]]
 
+##  • search by datetime ====================
+
+sbd1 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[7])
+
 ## hier weiter!!!
 # TODO:
 #   search functions
 #   search by: time range, location range, parameters (fuzzy search)
 
 
-# # zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[10])
-# zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[7])
+# zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[10])
 # zz1b <- search_by_datetime('01.01.2017 to 01.02.2018', meta_search = zz1)
 # zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[[7]])
 # search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata)

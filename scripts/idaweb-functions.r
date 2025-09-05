@@ -151,33 +151,53 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
 #   search functions
 #   search by: time range, location range, parameters (fuzzy search)
 
-search_by_datetime <- function(meta_search, from, to, tz = get_tzone(from, to)) {
-    # change once package
-    if (missing(meta_search)) {
-        # meta_search <- idaweb:::metadata
-        meta_search <- metadata
-    } else if (is.character(meta_search)) {
+fix_meta_arg <- function(meta) {
+    meta_arg <- deparse(substitute(meta))
+    if (missing(meta)) {
+        # change once package
+        # return(idaweb:::metadata)
+        return(metadata)
+    } else if (is.character(meta)) {
+        # change once package
         # ind <- sub('ch.meteoschweiz.ogd-', '', names(idaweb:::metadata)) %in%
         ind <- sub('ch.meteoschweiz.ogd-', '', names(metadata)) %in%
-            sub('ch.meteoschweiz.ogd-', '', meta_search)
+            sub('ch.meteoschweiz.ogd-', '', meta)
         if (any(ind)) {
             # collection name(s)
-            if (length(meta_search) == 1L) {
-                meta_search <- metadata[[which(ind)]]
+            if (length(meta) == 1L) {
+                meta <- metadata[[which(ind)]]
             } else {
-                meta_search <- metadata[ind]
+                meta <- metadata[ind]
             }
         } else {
-            meta_search <- switch(meta_search
+            meta <- switch(meta
                 # 'all' = idaweb:::metadata,
                 , 'all' = metadata
                 # any others?
                 # error unknown
-                , stop('cannot interpret argument "meta_search"!')
+                , stop('cannot interpret ',meta_arg ,' argument!', call. = FALSE)
             )
         }
+        return(meta)
+    } else if (inherits(meta, 'ms_metadata')) {
+        # meta data of single collection
+        return(meta)
+    } else if (is.list(meta)) {
+        # check list of meta data
+        check_list <- unlist(lapply(meta, inherits, 'ms_metadata'))
+        if (all(check_list)) {
+            # list of collections
+            return(meta)
+        }
     }
+    # throw error (TODO: add parent.call via argument)
+    stop('cannot interpret ', meta_arg , ' argument!', call. = FALSE)
+}
+
+search_by_datetime <- function(meta_search, from, to, tz = get_tzone(from, to)) {
     # change argument meta_search to meta_search = idaweb:::metadata or similar argument name
+    # fix meta argument
+    meta_search <- fix_meta_arg(meta_search)
     # parse from & to
     fromto <- check_fromto(from, to, tz = tz)
     # select datainventory/station/parameters
@@ -209,14 +229,16 @@ search_by_datetime <- function(meta_search, from, to, tz = get_tzone(from, to)) 
                 stations = sub_stats,
                 parameters = sub_paras
             ), 
-            class = 'meta_search', 
-            # get since & till
-            data_since = min(sub_inv$data_since),
-            data_till = max(sub_inv$data_till),
+            class = 'ms_metadata', 
+            # pass collection
+            collection = attr(meta_search, 'collection'),
+            # update further attributes
+            stations = unique(sub_stats$station_abbr),
             wgs84_lat = range(sub_stats$station_coordinates_wgs84_lat),
             wgs84_lon = range(sub_stats$station_coordinates_wgs84_lon),
             parameters = unique(sub_paras$parameter_shortname),
-            collection = basename(dirname(meta_search$assets[[1]]$href)),
+            data_since = min(sub_inv$data_since),
+            data_till = max(sub_inv$data_till),
             search_fromto = list(fromto = fromto, tz = tz),
             search_location = attr(meta_search, 'search_location'),
             search_parameters = attr(meta_search, 'search_parameters')
@@ -643,8 +665,6 @@ if (FALSE) {
 
     # TODO: station_info(zz_data), parameter_info(zz_data)..
 
-    # TODO: add granularity & parameter group to print.meta_search
-
     # x1 <- search_by_parameter(group = c('wind', 'temperature'), granularity = 'H', meta_search = metadata[[7]])
     # x1$parameter
 
@@ -689,31 +709,6 @@ print.ms_collections <- function(x, ...) {
     invisible()
 }
 
-# print method for search results
-print.meta_search <- function(x, ...) {
-    # fix paras
-    paras <- paste(attr(x, 'parameters'), collapse = ',')
-    if (nchar(paras) > 40) {
-        paras <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', paras)
-    }
-    # fix till
-    data_till <- attr(x, 'data_till')
-    if (is.na(data_till) && lubridate::is.POSIXct(data_till)) {
-        data_till <- 'today'
-    } else {
-        data_till <- format(data_till)
-    }
-    cat('~~~\n')
-    cat('Collection:', attr(x, 'collection'), '\n')
-    cat('  data since', format(attr(x, 'data_since')), '\n')
-    cat('  data until', data_till, '\n')
-    cat('  wgs84 lat', paste(attr(x, 'wgs84_lat'), collapse = ' .. '), '\n')
-    cat('  wgs84 lon', paste(attr(x, 'wgs84_lon'), collapse = ' .. '), '\n')
-    cat('  parameters:', paras, '\n')
-    cat('~~~\n')
-    invisible()
-}
-
 # print methods for meta data
 print.ms_assets <- function(x, ...) {
     ncs <- nchar(nms <- names(x))
@@ -748,18 +743,44 @@ print.ms_parameters <- function(x, ...) {
 }
 
 print.ms_metadata <- function(x, ...) {
-    cat('-- meta data --\n')
+    # shorten parameter groups
+    groups <- paste(unique(x[['parameters']][['parameter_group_en']]), collapse = ',')
+    if (nchar(groups) > 40) {
+        groups <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', groups)
+    }
+    # fix till
+    data_till <- attr(x, 'data_till')
+    if (is.na(data_till) && lubridate::is.POSIXct(data_till)) {
+        data_till <- 'today'
+    } else {
+        data_till <- format(data_till)
+    }
+    # fix lon
+    lon <- sub('^0', ' ', sprintf('%09.6f', attr(x, 'wgs84_lon')))
+    # cat('~~~\n')
+    cat('~~~ meta data ~~~\n')
+    cat('Collection:', attr(x, 'collection'), '\n')
     ncs <- nchar(nms <- names(x[[1]]))
     names(ncs) <- nms
     for (nm in nms) {
-        sadd <- paste(rep(' ', max(ncs) - ncs[nm] + 1), collapse = '')
-        cat(sub('.+_meta_(.+)[.]csv', '\\1', nm), sadd, 'last updated:', 
-            sub('T.+', '', x[[1]][[nm]][['updated']]), '\n')
+        sadd <- paste(rep(' ', max(ncs) - ncs[nm]), collapse = '')
+        dnm <- sub('.+_meta_(.+)[.]csv', '\\1', nm)
+        ladd <- paste0('(', nrow(x[[dnm]]), ' ', sub('inventory', '', dnm), ';')
+        cat(' -', dnm, sadd, ladd, 'last updated', 
+            sub('T.+', ')', x[[1]][[nm]][['updated']]), '\n')
     }
-    cat('Number of stations:', length(x[[3]][[1]]), '\n')
-    cat('Number of parameters:', length(x[[4]][[1]]), '\n')
-    cat('Granularities:', unique(x[[4]][['parameter_granularity']]), '\n')
-    print_dense(x[[2]], ...)
+    cat('~~~\n')
+    cat('  data since', format(attr(x, 'data_since')), '\n')
+    cat('  data until', data_till, '\n')
+    cat('  wgs84 lon:', paste(lon, collapse = ' .. '), '\n')
+    cat('  wgs84 lat:', paste(attr(x, 'wgs84_lat'), collapse = ' .. '), '\n')
+    cat('  param. groups:', groups, '\n')
+    cat('  granularities:', unique(x[['parameters']][['parameter_granularity']]), '\n')
+    cat('~~~\n')
+    cat('..$datainventory\n')
+    #########
+    print_dense(x[['datainventory']], ...)
+    cat('~~~~~~~~~~~~~~~~~\n')
 }
 
 print_dense <- function(x, ntop = 6, nbottom = ntop, center_sep = '---',
@@ -871,6 +892,7 @@ check_supported <- function(id) {
 }
 
 # parse from & to datetime input
+# TODO: allow multiple time ranges
 check_fromto <- function(from, to, tz = get_tzone(from, to)) {
     if (!missing(from) && length(from) != 1L) stop('argument "from" must have length 1!')
     if (!missing(to) && length(to) != 1L) stop('argument "to" must have length 1!')
