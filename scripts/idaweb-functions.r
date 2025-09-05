@@ -989,13 +989,28 @@ if (FALSE) {
 
     # rebuild meta data
     metadata <- mapply(\(col, inv, stat, para) {
-        structure(list(
-            assets = structure(col$assets, class = 'ms_assets'),
-            datainventory = structure(inv, class = c('ms_datainventory', 'data.frame')),
-            stations = structure(stat, class = c('ms_stations', 'data.frame')),
-            parameters = structure(para, class = c('ms_parameters', 'data.frame'))
-        ), class = 'ms_metadata')}, attr(sup, 'collections'), meta_datainv, 
-        meta_stations, meta_parameters, SIMPLIFY = FALSE)
+            meta_data <- list(
+                assets = structure(col$assets, class = 'ms_assets'),
+                datainventory = structure(inv, class = c('ms_datainventory', 'data.frame')),
+                stations = structure(stat, class = c('ms_stations', 'data.frame')),
+                parameters = structure(para, class = c('ms_parameters', 'data.frame'))
+            )
+            structure(
+                meta_data,
+                class = 'ms_metadata',
+                # update & add further attributes
+                collection = col$id,
+                stations = unique(meta_data[['stations']]$station_abbr),
+                wgs84_lat = range(meta_data[['stations']]$station_coordinates_wgs84_lat),
+                wgs84_lon = range(meta_data[['stations']]$station_coordinates_wgs84_lon),
+                parameters = unique(meta_data[['parameters']]$parameter_shortname),
+                data_since = min(meta_data[['datainventory']]$data_since),
+                data_till = max(meta_data[['datainventory']]$data_till)
+            )
+        }, 
+        attr(sup, 'collections'), meta_datainv, meta_stations, meta_parameters, 
+        SIMPLIFY = FALSE
+    )
     names(metadata) <- sup
     save(metadata, file = 'data/metadata.rda')
 }
