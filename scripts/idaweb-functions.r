@@ -757,11 +757,16 @@ print.ms_metadata <- function(x, ...) {
     }
     # fix lon
     lon <- sub('^0', ' ', sprintf('%09.6f', attr(x, 'wgs84_lon')))
+    # get collection info
+    col <- attr(x, 'collection')
     # cat('~~~\n')
     cat('~~~ meta data ~~~\n')
-    cat('Collection:', attr(x, 'collection'), '\n')
-    ncs <- nchar(nms <- names(x[[1]]))
+    cat('Collection:', col, '\n')
+    cat('**', attr(col, 'title'), '**\n')
+    ncs <- nchar(nms <- names(x[['assets']]))
     names(ncs) <- nms
+    # fix order: stat, para, data
+    nms <- nms[order(ncs)]
     for (nm in nms) {
         sadd <- paste(rep(' ', max(ncs) - ncs[nm]), collapse = '')
         dnm <- sub('.+_meta_(.+)[.]csv', '\\1', nm)
@@ -1011,6 +1016,8 @@ if (FALSE) {
 
     # rebuild meta data
     metadata <- mapply(\(col, inv, stat, para) {
+            col_out <- structure(col$id, title = col$title, 
+                description = col$description)
             meta_data <- list(
                 assets = structure(col$assets, class = 'ms_assets'),
                 datainventory = structure(inv, class = c('ms_datainventory', 'data.frame')),
@@ -1021,7 +1028,7 @@ if (FALSE) {
                 meta_data,
                 class = 'ms_metadata',
                 # update & add further attributes
-                collection = col$id,
+                collection = col_out,
                 stations = unique(meta_data[['stations']]$station_abbr),
                 wgs84_lat = range(meta_data[['stations']]$station_coordinates_wgs84_lat),
                 wgs84_lon = range(meta_data[['stations']]$station_coordinates_wgs84_lon),
