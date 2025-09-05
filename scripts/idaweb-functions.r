@@ -239,7 +239,7 @@ search_by_datetime <- function(meta_search, from, to, tz = get_tzone(from, to)) 
             parameters = unique(sub_paras$parameter_shortname),
             data_since = min(sub_inv$data_since),
             data_till = max(sub_inv$data_till),
-            search_fromto = list(fromto = fromto, tz = tz),
+            search_fromto = fromto,
             search_location = attr(meta_search, 'search_location'),
             search_parameters = attr(meta_search, 'search_parameters')
         )
@@ -781,6 +781,22 @@ print.ms_metadata <- function(x, ...) {
     cat('  wgs84 lat:', paste(attr(x, 'wgs84_lat'), collapse = ' .. '), '\n')
     cat('  param. groups:', groups, '\n')
     cat('  granularities:', unique(x[['parameters']][['parameter_granularity']]), '\n')
+    # check search attributes
+    sft <- attr(x, 'search_fromto')
+    slo <- attr(x, 'search_location')
+    spa <- attr(x, 'search_parameters')
+    if (any(!is.null(sft), !is.null(slo), !is.null(spa))) {
+        cat('  search restricted:\n')
+    }
+    if (!is.null(sft)) {
+        cat('   * datetime:', format(sft[1]), 'to', format(sft[2]), '\n')
+    }
+    # if (!is.null(slo)) {
+    #     cat('  search location:', format(slo[1]), 'to', format(slo[2]), '\n')
+    # }
+    # if (!is.null(spa)) {
+    #     cat('  search datetime:', format(spa[1]), 'to', format(spa[2]), '\n')
+    # }
     cat('~~~\n')
     cat('..$datainventory\n')
     #########
