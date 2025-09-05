@@ -194,7 +194,7 @@ fix_meta_arg <- function(meta) {
     stop('cannot interpret ', meta_arg , ' argument!', call. = FALSE)
 }
 
-search_by_datetime <- function(meta_search, from, to, tz = get_tzone(from, to)) {
+search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_search = metadata) {
     # change argument meta_search to meta_search = idaweb:::metadata or similar argument name
     # fix meta argument
     meta_search <- fix_meta_arg(meta_search)
