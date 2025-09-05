@@ -786,10 +786,14 @@ print.ms_metadata <- function(x, ...) {
     slo <- attr(x, 'search_location')
     spa <- attr(x, 'search_parameters')
     if (any(!is.null(sft), !is.null(slo), !is.null(spa))) {
-        cat('  search restricted:\n')
+        cat('  search restrictions:\n')
     }
     if (!is.null(sft)) {
-        cat('   * datetime:', format(sft[1]), 'to', format(sft[2]), '\n')
+        # fix Inf
+        fsft <- format(sft)
+        fsft[1] <- sub('-Inf', 'meas. start', fsft[1])
+        fsft[2] <- sub('Inf', 'last meas.', fsft[2])
+        cat('   * datetime:', fsft[1], 'to', fsft[2], '\n')
     }
     # if (!is.null(slo)) {
     #     cat('  search location:', format(slo[1]), 'to', format(slo[2]), '\n')

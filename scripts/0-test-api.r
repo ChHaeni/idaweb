@@ -41,13 +41,11 @@ metadata[[1]]
 
 zz0 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[7])
 zz1 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[10])
-
-# FIXME:
 zz1b <- search_by_datetime('01.01.2017 to 01.02.2018', meta_search = zz1)
+xx <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata)
 
-zz2 <- search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata[[7]])
-search_by_datetime('01.01.2018 to 05.02.2018', meta_search = metadata)
-search_by_datetime('smn', '13.08.2020')
+yy <- search_by_datetime('smn', '13.08.2020')
+
 search_by_datetime('13.08.2020', '01.01.2018') # -> error
 zz3 <- search_by_datetime('all', '13.08.2020', tz = 'CET', to = '14.08.2020')
 search_by_datetime('07.02.2024/08.03.2025')
