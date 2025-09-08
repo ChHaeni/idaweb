@@ -71,6 +71,10 @@ pz0 <- search_by_datetime(from = '07.02.2024/08.03.2025', meta_data = pp0)
 # 46.990755, 7.464018
 ll0 <- search_by_location('7.43..7.49', '46.96..47.12')
 ll1 <- search_by_location('7.43..', '..47.12')
+ll0b <- search_by_location('7.43..7.49', '46.96..47.12', drop_nodata = TRUE)
+
+# TODO:
+#   add option to only return collections with data
 
 # -> search meta_data$stations
 # TODO:

@@ -194,7 +194,7 @@ fix_meta_arg <- function(meta) {
     stop('cannot interpret ', meta_arg , ' argument!', call. = FALSE)
 }
 
-search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = metadata) {
+search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = metadata, drop_nodata = FALSE) {
     # change argument meta_data to meta_data = idaweb:::metadata or similar argument name
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
@@ -216,6 +216,9 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
         i_to <- i_from & meta_data$datainventory$data_since <= fromto[2]
         # return subset incl from/to
         sub_inv <- meta_data$datainventory[i_to, ]
+        if (drop_nodata && nrow(sub_inv) == 0) {
+            return(NULL)
+        }
         # get stations
         sub_stats <- meta_data$stations[meta_data$stations$station_abbr %in% 
             sub_inv$station_abbr, ]
@@ -259,12 +262,18 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
             search_parameters = attr(meta_data, 'search_parameters')
         )
     } else {
-        sapply(meta_data, search_by_datetime, from = fromto[1], to = fromto[2], tz = tz,
+        out <- sapply(meta_data, search_by_datetime, from = fromto[1], 
+            to = fromto[2], tz = tz, drop_nodata = drop_nodata,
             simplify = FALSE)
+        if (drop_nodata) {
+            out[!sapply(out, is.null)]
+        } else {
+            out
+        }
     }
 }
 
-search_by_location <- function(x, y, meta_data = metadata) {
+search_by_location <- function(x, y, meta_data = metadata, drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
     # ch_x & ch_y: same as above BUT additionally, only 100-thousands 
@@ -295,6 +304,9 @@ search_by_location <- function(x, y, meta_data = metadata) {
         # get inventory
         sub_inv <- meta_data$datainventory[meta_data$datainventory$station_abbr 
             %in% sub_stats$station_abbr, ]
+        if (drop_nodata && nrow(sub_inv) == 0) {
+            return(NULL)
+        }
         # get parameters
         sub_paras <- meta_data$parameters[meta_data$parameters$parameter_shortname %in% 
             sub_inv$parameter_shortname, ]
@@ -335,7 +347,13 @@ search_by_location <- function(x, y, meta_data = metadata) {
             search_parameters = attr(meta_data, 'search_parameters')
         )
     } else {
-        sapply(meta_data, search_by_location, x = xv, y = yv, simplify = FALSE)
+        out <- sapply(meta_data, search_by_location, x = xv, y = yv, 
+            drop_nodata = drop_nodata, simplify = FALSE)
+        if (drop_nodata) {
+            out[!sapply(out, is.null)]
+        } else {
+            out
+        }
     }
 }
 
@@ -392,7 +410,7 @@ check_xy_arg <- function(xy) {
 search_by_parameter <- function(shortname, unit, group, description, 
     language = c('en', 'de', 'fr', 'it'), 
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
-    meta_data = metadata) {
+    meta_data = metadata, drop_nodata = FALSE) {
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
     if ('datainventory' %in% names(meta_data)) {
@@ -432,8 +450,12 @@ search_by_parameter <- function(shortname, unit, group, description,
             search_parameters <- c(search_parameters, list(description = description))
         }
         # get inventory
-        sub_inv <- meta_data$datainventory[meta_data$datainventory$parameter_shortname %in% 
+        sub_inv <- meta_data$datainventory[
+            meta_data$datainventory$parameter_shortname %in% 
             sub_paras$parameter_shortname, ]
+        if (drop_nodata && nrow(sub_inv) == 0) {
+            return(NULL)
+        }
         # get stations
         sub_stats <- meta_data$stations[meta_data$stations$station_abbr %in% 
             sub_inv$station_abbr, ]
@@ -474,9 +496,15 @@ search_by_parameter <- function(shortname, unit, group, description,
             search_parameters = search_parameters
         )
     } else {
-        sapply(meta_data, search_by_parameter, shortname = shortname, unit = unit, 
-            group = group, description = description, language = language, 
-            granularity = granularity, simplify = FALSE)
+        out <- sapply(meta_data, search_by_parameter, shortname = shortname, 
+            unit = unit, group = group, description = description, 
+            language = language, granularity = granularity, 
+            drop_nodata = drop_nodata, simplify = FALSE)
+        if (drop_nodata) {
+            out[!sapply(out, is.null)]
+        } else {
+            out
+        }
     }
 }
 
