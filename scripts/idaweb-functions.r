@@ -739,8 +739,12 @@ print.ms_metadata <- function(x, ...) {
     # fix lon 
     # lon <- sub('^0', ' ', sprintf('%09.6f', attr(x, 'wgs84_lon')))
     # show only 3 digits (1e-3° ≈ 100 m)
-    lon <- sub('^0', ' ', sprintf('%06.3f', attr(x, 'wgs84_lon')))
-    lat <- sprintf('%06.3f', attr(x, 'wgs84_lat'))
+    if (any(is.na(attr(x, 'wgs84_lon')))) {
+        lon <- lat <- NA_character_
+    } else {
+        lon <- sub('^0', ' ', sprintf('%06.3f', attr(x, 'wgs84_lon')))
+        lat <- sprintf('%06.3f', attr(x, 'wgs84_lat'))
+    }
     # get collection info
     col <- attr(x, 'collection')
     # cat('~~~\n')
@@ -780,9 +784,12 @@ print.ms_metadata <- function(x, ...) {
             cat('   * to:', format(sft[2]), '\n')
         }
     }
-    # if (!is.null(slo)) {
-    #     cat('  search location:', format(slo[1]), 'to', format(slo[2]), '\n')
-    # }
+    if (!is.null(slo)) {
+        for (slnm in names(slo)) {
+            cat('   *', slnm, ':', sapply(slo[[slnm]], paste, 
+                collapse = '..'), '\n')
+        }
+    }
     if (!is.null(spa)) {
         for (spnm in names(spa)) {
             cat('   *', spnm, ':', spa[[spnm]], '\n')
