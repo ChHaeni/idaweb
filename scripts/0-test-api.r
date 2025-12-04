@@ -26,10 +26,30 @@ sup
 
 # get meta data
 # args(get_metadata)
+
+# -> FAILS!!!!
 meta_datainv <- get_metadata(sup, 'data', cache_dir = path_cache)
 meta_stations <- get_metadata(sup, 'stat', cache_dir = path_cache)
 meta_parameters <- get_metadata(sup, 'par', cache_dir = path_cache)
 get_metadata(sup[1])
+
+meta_datainv <- get_metadata(sup[9], 'data', cache_dir = path_cache)
+meta_stations <- get_metadata(sup[9], 'stat', cache_dir = path_cache)
+meta_parameters <- get_metadata(sup[9], 'par', cache_dir = path_cache)
+md <- get_metadata(sup[9], cache_dir = path_cache)
+
+dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[7])
+dt <- search_by_datetime('01.09.2024 to 31.12.2025', meta_data = dl)
+# as.data.table(dt[[1]]$parameters)[parameter_granularity == 'H']
+as.data.table(dt[[1]]$parameters)[parameter_granularity == 'H' & parameter_group_en == 'Radiation']
+as.data.table(dt[[1]]$parameters)[parameter_granularity == 'H' & parameter_group_en == 'Temperature']
+dp <- search_by_parameter(meta_data = dt, granularity = 'H', 
+    shortname = c('gre000h0', 'tre200h0'))
+
+xx <- get_filenames(dp[[1]])
+yy <- get_files(xx)
+dat <- get_data(yy)
+fwrite(dat[[1]], '~/tmp/alex/zollikofen-temp-grad.csv')
 
 metadata[[1]][[1]]
 metadata[[1]][[2]]
@@ -72,6 +92,8 @@ pz0 <- search_by_datetime(from = '07.02.2024/08.03.2025', meta_data = pp0)
 ll0 <- search_by_location('7.43..7.49', '46.96..47.12')
 ll1 <- search_by_location('7.43..', '..47.12')
 ll0b <- search_by_location('7.43..7.49', '46.96..47.12', drop_nodata = TRUE)
+
+# TODO: search_by_station
 
 # TODO:
 #   add option to only return collections with data
@@ -164,4 +186,5 @@ if (FALSE) {
     zz_data <- get_data(yy)
     # qs2::qd_save(zz_data[[1]], '~/repos/5_GitHub/agrammon-workbench/alfam2/zol-temp-ws.qdata')
 
-} when a parameter is not measured at all at a certain station.
+} 
+# when a parameter is not measured at all at a certain station. ???
