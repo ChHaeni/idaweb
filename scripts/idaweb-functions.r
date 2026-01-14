@@ -265,8 +265,9 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
 
 # TODO: add z (height above sea level)
 # TODO: add search_by_station function (station abbr, name, canton, ...)
-search_by_location <- function(x, y, z, station_abbr, station_name, station_canton,
-    meta_data = metadata, drop_nodata = FALSE) {
+search_by_location <- function(x, y, z = NULL, station_abbr = NULL,
+    station_name = NULL, station_canton = NULL, meta_data = metadata, 
+    drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
     # ch_x & ch_y: same as above BUT additionally, only 100-thousands 
@@ -276,26 +277,65 @@ search_by_location <- function(x, y, z, station_abbr, station_name, station_cant
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
     # change argument meta_data to meta_data = idaweb:::metadata or similar argument name
-    # add functions:
-    #   .search_xy
-    #   .search_z
-    #   .search_stn (abbr, name -> fuzzy_search, canton)
     # parse x
     xv <- check_xy_arg(x)
     # parse y
     yv <- check_xy_arg(y)
+    # parse z
+    zv <- check_z_arg(z)
     # select datainventory/station/parameters
     if ('datainventory' %in% names(meta_data)) {
         if (!is.null(sft <- attr(meta_data, 'search_location'))) {
             stop('Fix already searched by location')
         }
+        # get number of stations
+        n_stations <- nrow(meta_data$stations)
         # TODO: improve these if/else tests! and capture errors
-        # check from
-        s_lon <- meta_data$stations$station_coordinates_wgs84_lon 
-        s_lat <- meta_data$stations$station_coordinates_wgs84_lat 
-        i_x <- unlist(lapply(xv, \(v) s_lon >= v[1] & s_lon <= v[2]))
-        i_y <- unlist(lapply(yv, \(v) s_lat >= v[1] & s_lat <= v[2]))
-        i_ok <- i_x & i_y
+        # check x/lon
+        if (is.null(xv)) {
+            i_x <- rep(TRUE, n_stations)
+        } else {
+            # subset by longitude
+            s_lon <- meta_data$stations$station_coordinates_wgs84_lon 
+            i_x <- unlist(lapply(xv, \(v) s_lon >= v[1] & s_lon <= v[2]))
+        }
+        # check y/lat
+        if (is.null(yv)) {
+            i_y <- rep(TRUE, n_stations)
+        } else {
+            # subset by latitude
+            s_lat <- meta_data$stations$station_coordinates_wgs84_lat 
+            i_y <- unlist(lapply(yv, \(v) s_lat >= v[1] & s_lat <= v[2]))
+        }
+        # check z/elevation
+        if (is.null(zv)) {
+            i_z <- rep(TRUE, n_stations)
+        } else {
+            # subset by elevation
+            s_el <- meta_data$stations$station_height_masl
+            i_z <- unlist(lapply(zv, \(v) s_el >= v[1] & s_el <= v[2]))
+        }
+        # check station_abbr
+        if (is.null(station_abbr)) {
+            i_abbr <- rep(TRUE, n_stations)
+        } else {
+            i_abbr <- meta_data$stations$station_abbr %in% station_abbr
+        }
+        # check station_name
+        if (is.null(station_name)) {
+            i_name <- rep(TRUE, n_stations)
+        } else {
+            i_name <- unlist(lapply(station_name, fuzzy_search, 
+                meta_data$stations$station_name))
+        }
+        # check station_canton
+        if (is.null(station_canton)) {
+            i_canton <- rep(TRUE, n_stations)
+        } else {
+            i_canton <- meta_data$stations$station_canton %in% station_canton
+        }
+        # combine all
+        i_ok <- i_x & i_y & i_z & i_abbr & i_name & i_canton
         # return subset of stations
         sub_stats <- meta_data$stations[i_ok, ]
         # get inventory
@@ -340,12 +380,16 @@ search_by_location <- function(x, y, z, station_abbr, station_name, station_cant
             data_since = data_since,
             data_till = data_till,
             search_fromto = attr(meta_data, 'search_fromto'),
-            search_location = list(x = x, y = y),
+            search_location = list(x = x, y = y, z = z, station_abbr = station_abbr,
+                station_name = station_name, station_canton = station_canton),
             search_parameters = attr(meta_data, 'search_parameters')
         )
     } else {
         out <- sapply(meta_data, search_by_location, x = xv, y = yv, 
-            drop_nodata = drop_nodata, simplify = FALSE)
+            z = zv, station_abbr = station_abbr, station_name = station_name,
+            station_canton = station_canton, drop_nodata = drop_nodata, 
+            simplify = FALSE
+        )
         if (drop_nodata) {
             out[!sapply(out, is.null)]
         } else {
@@ -355,6 +399,9 @@ search_by_location <- function(x, y, z, station_abbr, station_name, station_cant
 }
 
 check_xy_arg <- function(xy) {
+    if (missing(xy) || is.null(xy)) {
+        return(NULL)
+    }
     xy_nm <- deparse(substitute(xy))
     if (is.list(xy) && all(sapply(xy, is.numeric)) &&
         unique(lengths(xy)) == 2L) {
@@ -367,7 +414,7 @@ check_xy_arg <- function(xy) {
         v_out <- list(xy)
     } else {
         # define valid separators
-        seps <- c('[.][.]', 'to', '/', '//')
+        seps <- c('[.][.]', 'to', '/', '//', '-')
         # check list format
         if (is.list(xy)) {
             stop('Fix list input!')
@@ -398,6 +445,55 @@ check_xy_arg <- function(xy) {
                 # 200/200000, 1200/1200000
             }
             v
+        })
+    }
+    # return list of values
+    v_out
+}
+
+check_z_arg <- function(z) {
+    if (missing(z) || is.null(z)) {
+        return(NULL)
+    }
+    z_nm <- deparse(substitute(z))
+    if (is.list(z) && all(sapply(z, is.numeric)) &&
+        unique(lengths(z)) == 2L) {
+        return(z)
+    }
+    if (is.numeric(z)) {
+        if (length(z) != 2) {
+            stop('if argument', z_nm, 'is numeric, length must be 2 (use -Inf/Inf for open limits)')
+        }
+        v_out <- list(z)
+    } else {
+        # define valid separators
+        seps <- paste0('\\s*', c('[.][.]', 'to', '/', '//', '-'), '\\s*')
+        # check list format
+        if (is.list(z)) {
+            stop('Fix list input!')
+            ul <- unique(lengths(z))
+            if (length(ul) > 1 || ul < 1 || ul > 2) {
+                stop('list input not valid')
+            }
+        }
+        # split by separators
+        zsp <- strsplit(z, split = paste(seps, collapse = '|'))
+        v_out <- lapply(zsp, \(x) {
+            if (length(x) == 1) {
+                if (grepl('>=?', x)) {
+                    c(as.numeric(sub('\\s*>=?\\s*', '', x)), Inf)
+                } else if (grepl('<=?', x)) {
+                    c(0, as.numeric(sub('\\s*<=?\\s*', '', x)))
+                } else {
+                    c(as.numeric(x), Inf)
+                }
+            } else if (length(x) > 2) {
+                stop('argument', z_nm, 'is not in a recognized format!')
+            } else {
+                x <- as.numeric(x)
+                if (is.na(x[1])) x[1] <- 0
+                x
+            }
         })
     }
     # return list of values
@@ -755,6 +851,11 @@ print.ms_metadata <- function(x, ...) {
     if (nchar(groups) > 40) {
         groups <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', groups)
     }
+    # shorten stations
+    stations <- paste(unique(x[['stations']][['station_abbr']]), collapse = ',')
+    if (nchar(stations) > 40) {
+        stations <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', stations)
+    }
     # fix till
     data_till <- attr(x, 'data_till')
     if (is.na(data_till) && lubridate::is.POSIXct(data_till)) {
@@ -793,6 +894,7 @@ print.ms_metadata <- function(x, ...) {
     cat('  data until', data_till, '\n')
     cat('  wgs84 lon:', paste(lon, collapse = ' .. '), '\n')
     cat('  wgs84 lat:', paste(lat, collapse = ' .. '), '\n')
+    cat('  station abbr.:', stations, '\n')
     cat('  param. groups:', groups, '\n')
     cat('  granularities:', unique(x[['parameters']][['parameter_granularity']]), '\n')
     # check search attributes
@@ -812,13 +914,17 @@ print.ms_metadata <- function(x, ...) {
     }
     if (!is.null(slo)) {
         for (slnm in names(slo)) {
-            cat('   *', slnm, ':', sapply(slo[[slnm]], paste, 
-                collapse = '..'), '\n')
+            if (!is.null(slo[[slnm]])) {
+                cat('   *', slnm, ':', sapply(slo[[slnm]], paste, 
+                    collapse = '..'), '\n')
+            }
         }
     }
     if (!is.null(spa)) {
         for (spnm in names(spa)) {
-            cat('   *', spnm, ':', spa[[spnm]], '\n')
+            if (!is.null(spa[[spnm]])) {
+                cat('   *', spnm, ':', spa[[spnm]], '\n')
+            }
         }
     }
     cat('~~~\n')
