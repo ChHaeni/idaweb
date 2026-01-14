@@ -642,14 +642,17 @@ search_by_parameter <- function(shortname, unit, group, description,
     # add previous year cut
     cy_jan_minus_1y <- cy_jan
     year(cy_jan_minus_1y) <- year(cy_jan) - 1
-    if (
-        (from <= cy_jan && to > cy_jan) ||
-        # previous year is included in current year until February (see mail support)
-        (from < yd12 && to > cy_jan_minus_1y && month(Sys.time()) <= 2)
-    ) {
+    if (from <= cy_jan && to > cy_jan) {
         file_list <- c(file_list, list(list(
                 filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
                 from = max(from, cy_jan),
+                to = min(to, yd12)
+            )))
+    } else if (from < yd12 && to > cy_jan_minus_1y && month(Sys.time()) <= 2) {
+        # previous year is included in current year until February (see mail support)
+        file_list <- c(file_list, list(list(
+                filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
+                from = max(from, cy_jan_minus_1y),
                 to = min(to, yd12)
             )))
     }
