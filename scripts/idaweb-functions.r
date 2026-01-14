@@ -265,7 +265,8 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
 
 # TODO: add z (height above sea level)
 # TODO: add search_by_station function (station abbr, name, canton, ...)
-search_by_location <- function(x, y, meta_data = metadata, drop_nodata = FALSE) {
+search_by_location <- function(x, y, z, station_abbr, station_name, station_canton,
+    meta_data = metadata, drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
     # ch_x & ch_y: same as above BUT additionally, only 100-thousands 
@@ -275,6 +276,10 @@ search_by_location <- function(x, y, meta_data = metadata, drop_nodata = FALSE) 
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
     # change argument meta_data to meta_data = idaweb:::metadata or similar argument name
+    # add functions:
+    #   .search_xy
+    #   .search_z
+    #   .search_stn (abbr, name -> fuzzy_search, canton)
     # parse x
     xv <- check_xy_arg(x)
     # parse y
@@ -1031,9 +1036,9 @@ fa_st <- function(x, tz) {
 }
 
 # "fuzzy" searching strings
-fuzzy_search <- function(x, y, ignore.case = TRUE, value = FALSE) {
-    fuzzy_x <- paste(c('', unlist(strsplit(x, split = '')), ''), collapse = '.*')
-    grep(fuzzy_x, y, value = value, ignore.case = ignore.case)
+fuzzy_search <- function(pattern, string, ignore.case = TRUE, value = FALSE) {
+    fuz_pat <- paste(c('', unlist(strsplit(pattern, split = '')), ''), collapse = '.*')
+    grep(fuz_pat, string, value = value, ignore.case = ignore.case)
 }
 
 ## re-build meta data ----------------------------------------
@@ -1041,6 +1046,7 @@ fuzzy_search <- function(x, y, ignore.case = TRUE, value = FALSE) {
 if (FALSE) {
     # TODO: make function to update metadata in package data path
     #       -> function to get package path: system.file(package=)
+    #       -> name metadata data differently and check if exists in code
     # check collections from MeteoSwiss
     sup <- collections()
     sup
