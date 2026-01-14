@@ -1142,8 +1142,8 @@ fa_st <- function(x, tz) {
 }
 
 # "fuzzy" searching strings
-fuzzy_search <- function(pattern, string, ignore.case = TRUE, value = FALSE,
-    return_logical = FALSE) {
+fuzzy_search <- function(pattern, string, value = FALSE, return_logical = FALSE,
+    ignore.case = all(is.na(pmatch(LETTERS, pattern)))) {
     fuz_pat <- paste(c('', unlist(strsplit(pattern, split = '')), ''), collapse = '.*')
     if (return_logical) {
         grepl(fuz_pat, string, ignore.case = ignore.case)
