@@ -76,7 +76,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                 format = "%Y-%m-%dT%H:%M:%OSZ", lt = FALSE
             )
             # check if package data is up-to-date
-            load('data/metadata.rda')
+            # load('data/metadata.rda')
             meta_last_updated <- lubridate::fast_strptime(
                 # idaweb:::metadata[[id]]$assets[[file_name]]$updated,
                 # replace me when package
@@ -697,7 +697,8 @@ print.ms_collections <- function(x, ...) {
     titles <- sapply(attr(x, 'collections'), '[[', 'title')
     mt <- max(nchar(titles)) + grepl('[^a-zA-Z0-9:)( -]', titles) * 2
     cat('~~~~~~~~~~~~~~~~~~~~~~\n')
-    cat('Open Data - MeteoSwiss\n\n')
+    cat('Open Data - MeteoSwiss\n')
+    cat('(Ground-based measurements)\n')
     cat(nl <- length(x), 'collections available:\n')
     cat(paste(rep('-', nchar(as.character(nl))), collapse = ''),
         '-----------------------\n', sep = '')
@@ -1038,7 +1039,9 @@ fuzzy_search <- function(x, y, ignore.case = TRUE, value = FALSE) {
 ## re-build meta data ----------------------------------------
 
 if (FALSE) {
-    # check supported collections from MeteoSwiss
+    # TODO: make function to update metadata in package data path
+    #       -> function to get package path: system.file(package=)
+    # check collections from MeteoSwiss
     sup <- collections()
     sup
 
@@ -1075,6 +1078,7 @@ if (FALSE) {
         SIMPLIFY = FALSE
     )
     names(metadata) <- sup
-    save(metadata, file = 'data/metadata.rda')
+    # save(metadata, file = 'data/metadata.rda')
+    save(metadata, file = '~/repos/3_Scripts/8_meteoswiss/data/metadata.rda')
 }
 
