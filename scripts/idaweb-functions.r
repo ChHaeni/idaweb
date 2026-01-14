@@ -14,6 +14,11 @@
 # data sets A1 to A9
 # smn, smn-preicp, smn-tower, nime, tot, pollen, obs, phenology
 
+# note on data handling:
+# mail from support: Re: Incident INC000002367960 / Daten 2025 unter "aktuelles Jahr"
+#   Die Daten 2025 sind bis im Februar noch unter «aktuelles Jahr» zu finden.
+#   Danach werden die Daten geprüft und definitiv und unter 2020-2929 auffindbar sein.
+
 # in general:
 # - fetch data info
 # - meta data included in package -> check if update needed
