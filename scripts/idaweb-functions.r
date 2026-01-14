@@ -59,18 +59,6 @@ collections <- function(set_name = NULL) {
 info <- function(x, i = NULL) {
 }
 
-# get supported collections
-supported_collections <- function() {
-    out <- getOption('ms_supported_collections')
-    if (is.null(out)) {
-        # get collections
-        out <- collections(TRUE)
-        # assign to options
-        options(setNames(list(out), 'ms_supported_collections'))
-    }
-    invisible(out)
-}
-
 # get meta data
 get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters'),
     cache_dir = tempdir()) {
@@ -924,7 +912,7 @@ dl_data <- function(url, checksum = NULL, cache_dir = tempdir()) {
 # check if supported
 check_supported <- function(id) {
     if (length(id) == 1L && is.character(id)) {
-        sc <- supported_collections()
+        sc <- collections()
         i <- which(sc %in% id)
         if (length(i) == 0L) {
             structure(FALSE, collection = list())
@@ -1051,7 +1039,7 @@ fuzzy_search <- function(x, y, ignore.case = TRUE, value = FALSE) {
 
 if (FALSE) {
     # check supported collections from MeteoSwiss
-    sup <- supported_collections()
+    sup <- collections()
     sup
 
     # get meta data
