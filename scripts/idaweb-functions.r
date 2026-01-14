@@ -326,7 +326,7 @@ search_by_location <- function(x, y, z = NULL, station_abbr = NULL,
             i_name <- rep(TRUE, n_stations)
         } else {
             i_name <- unlist(lapply(station_name, fuzzy_search, 
-                meta_data$stations$station_name))
+                meta_data$stations$station_name, return_logical = TRUE))
         }
         # check station_canton
         if (is.null(station_canton)) {
@@ -1142,9 +1142,14 @@ fa_st <- function(x, tz) {
 }
 
 # "fuzzy" searching strings
-fuzzy_search <- function(pattern, string, ignore.case = TRUE, value = FALSE) {
+fuzzy_search <- function(pattern, string, ignore.case = TRUE, value = FALSE,
+    return_logical = FALSE) {
     fuz_pat <- paste(c('', unlist(strsplit(pattern, split = '')), ''), collapse = '.*')
-    grep(fuz_pat, string, value = value, ignore.case = ignore.case)
+    if (return_logical) {
+        grepl(fuz_pat, string, ignore.case = ignore.case)
+    } else {
+        grep(fuz_pat, string, value = value, ignore.case = ignore.case)
+    }
 }
 
 ## re-build meta data ----------------------------------------
