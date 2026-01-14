@@ -630,14 +630,17 @@ search_by_parameter <- function(shortname, unit, group, description,
         if (is.na(to)) {
             to <- now
         }
-        # add yesterday cut
-        if (from <= yd12 && to > yd12) {
+        # add yesterday cut (until Feb. it seems to be midnight previous day)
+        yd_midnight <- yd12
+        hour(yd_midnight) <- 23
+        second(yd_midnight) <- minute(yd_midnight) <- 59
+        if (from <= now && to > yd12) {
             file_list <- c(file_list, list(list(
                     filename = paste(pre, stat, gran, 'now.csv', sep = '_'),
                     from = max(from, yd12),
                     to = min(to, now)
                 )))
-        }
+        } 
     }
     # add previous year cut
     cy_jan_minus_1y <- cy_jan
@@ -648,13 +651,21 @@ search_by_parameter <- function(shortname, unit, group, description,
                 from = max(from, cy_jan),
                 to = min(to, yd12)
             )))
-    } else if (from < yd12 && to > cy_jan_minus_1y && month(Sys.time()) <= 2) {
+    } 
+    if (from < yd_midnight && to > cy_jan_minus_1y && month(now) <= 2) {
         # previous year is included in current year until February (see mail support)
-        file_list <- c(file_list, list(list(
-                filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
-                from = max(from, cy_jan_minus_1y),
-                to = min(to, yd12)
-            )))
+        if ((l <- length(file_list)) > 0 && grepl('recent', file_list[[l]]$filename)) {
+            # update from & to, only
+            file_list[[l]]$from <- max(from, cy_jan_minus_1y) 
+            file_list[[l]]$to <- min(to, yd_midnight)
+        } else {
+            # add new entry
+            file_list <- c(file_list, list(list(
+                    filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
+                    from = max(from, cy_jan_minus_1y),
+                    to = min(to, yd_midnight)
+                )))
+        }
     }
     # add all previous 10 years
     if (from < cy_jan) {
