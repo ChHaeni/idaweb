@@ -8,6 +8,11 @@
 
 # only collections from meteoswiss
 # only ids containing ogd (because of meta data & data format)
+# check data sets: https://opendatadocs.meteoswiss.ch/
+
+# ground-base measurements only
+# data sets A1 to A9
+# smn, smn-preicp, smn-tower, nime, tot, pollen, obs, phenology
 
 # in general:
 # - fetch data info
@@ -31,24 +36,21 @@ ms_url <- function(...) {
 
 # fetch available MeteoSwiss Open Data
 # run to show all supported collections: collections(TRUE)
-collections <- function(supported_only = FALSE) {
-    # base url to REST API
-    get_url <- ms_url('api/stac/v1/collections?provider=meteoswiss')
-    # get info
-    out <- content(GET(get_url))
-    if (is.null(out$code)) {
-        ids <- sapply(out$collections, '[[', 'id')
-        if (supported_only) {
-            # filter for collections supported by this package
-            i_supported <- grep('ogd-forecasting(*SKIP)(*FAIL)|ogd-.*', ids, perl = TRUE)
-            out$collections <- out$collections[i_supported]
-            ids <- ids[i_supported]
-        }
-        attr(ids, 'collections') <- out$collections
-        structure(ids, class = 'ms_collections')
-    } else {
-        out
-    }
+collections <- function(set_name = NULL) {
+    # all ground-base measurement sets
+    set_names <- c('smn', 'smn-precip', 'smn-tower', 'nime', 'tot', 
+        'pollen', 'obs', 'phenology')
+    # loop over sets
+    out <- lapply(set_names, \(x) {
+        # fix url
+        get_url <- ms_url('api/stac/v1/collections/ch.meteoschweiz.ogd-', x)
+        # get info
+        content(GET(get_url))
+    })
+    # get ids
+    ids <- sapply(out, '[[', 'id')
+    attr(ids, 'collections') <- out
+    structure(ids, class = 'ms_collections')
 }
 
 # function to get info on specific data set(s) from collection
@@ -273,6 +275,8 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
     }
 }
 
+# TODO: add z (height above sea level)
+# TODO: add search_by_station function (station abbr, name, canton, ...)
 search_by_location <- function(x, y, meta_data = metadata, drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
