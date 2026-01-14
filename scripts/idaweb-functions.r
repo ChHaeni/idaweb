@@ -19,12 +19,20 @@
 #   Die Daten 2025 sind bis im Februar noch unter «aktuelles Jahr» zu finden.
 #   Danach werden die Daten geprüft und definitiv und unter 2020-2929 auffindbar sein.
 
-# in general:
+# overview on functions:
+# -
+
+# TODO:
 # - fetch data info
 # - meta data included in package -> check if update needed
 # - function to update specific or all meta data (if necessary)
 # - download data only if not available in options
 # - one function to get data (incl. options check)
+# - convenience functions:
+#   * get_data -> rename current get_data to .get_data & wrap get_filenames, get_files &
+#       .get_data into one function
+#   * search_data -> wrapper for all search_by_* functions
+#   * parameters(), stations(), datainventory()
 
 ## functions ----------------------------------------
 
