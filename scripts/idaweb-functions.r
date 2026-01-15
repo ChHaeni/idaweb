@@ -28,6 +28,7 @@
 # - function to update specific or all meta data (if necessary)
 # - download data only if not available in options
 # - one function to get data (incl. options check)
+# - show_on_map() => visualize subset on map
 # - convenience functions:
 #   * get_data -> rename current get_data to .get_data & wrap get_filenames, get_files &
 #       .get_data into one function
@@ -638,10 +639,7 @@ search_by_parameter <- function(shortname, unit, group, description,
         if (is.na(to)) {
             to <- now
         }
-        # add yesterday cut (until Feb. it seems to be midnight previous day)
-        yd_midnight <- yd12
-        hour(yd_midnight) <- 23
-        second(yd_midnight) <- minute(yd_midnight) <- 59
+        # add yesterday cut
         if (from <= now && to > yd12) {
             file_list <- c(file_list, list(list(
                     filename = paste(pre, stat, gran, 'now.csv', sep = '_'),
@@ -653,14 +651,17 @@ search_by_parameter <- function(shortname, unit, group, description,
     # add previous year cut
     cy_jan_minus_1y <- cy_jan
     year(cy_jan_minus_1y) <- year(cy_jan) - 1
+    yd_midnight <- yd12
+    hour(yd_midnight) <- 23
+    second(yd_midnight) <- minute(yd_midnight) <- 59
     if (from <= cy_jan && to > cy_jan) {
         file_list <- c(file_list, list(list(
                 filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
                 from = max(from, cy_jan),
-                to = min(to, yd12)
+                to = min(to, yd_midnight)
             )))
     } 
-    if (from < yd_midnight && to > cy_jan_minus_1y && month(now) <= 2) {
+    if (from < yd12 && to > cy_jan_minus_1y && month(now) <= 2) {
         # previous year is included in current year until February (see mail support)
         if ((l <- length(file_list)) > 0 && grepl('recent', file_list[[l]]$filename)) {
             # update from & to, only
