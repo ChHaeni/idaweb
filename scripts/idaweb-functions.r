@@ -239,6 +239,42 @@ fix_meta_arg <- function(meta) {
     stop('cannot interpret ', meta_arg , ' argument!', call. = FALSE)
 }
 
+# search wrapper
+met_search(
+    # by datetime
+    from, to, tz = get_tzone(from, to), 
+    # by location
+    x, y, z, abbr, name, canton,
+    # by parameter
+    shortname, unit, group, description, 
+    granularity = c('T', 'H', 'D', 'M', 'Y'), 
+    language = c('en', 'de', 'fr', 'it'), 
+    # all
+    meta_data = metadata, drop_nodata = FALSE
+) {
+    # first search by location
+    if (!all(is.missing(x), is.missing(y), is.missing(z), is.missing(abbr),
+            is.missing(name), is.missing(canton))) {
+        meta_data <- search_by_location(x = x, y = y, z = z, abbr = abbr, 
+            name = name, canton = canton, meta_data = meta_data, 
+            drop_nodata = FALSE)
+    }
+    # second serach by parameter
+    if (!all(is.missing(shortname), is.missing(unit), is.missing(group), 
+            is.missing(description), is.missing(granularity))) {
+        meta_data <- search_by_parameter(shortname = shortname, unit = unit, 
+            group = group, description = description, language = language, 
+            granularity = granularity, meta_data = meta_data, 
+            drop_nodata = FALSE)
+    }
+    # third search by date/time
+    if (!all(is.missing(from), is.missing(to))) {
+        meta_data <- search_by_datetime(from = from, to = to, tz = tz, 
+            meta_data = meta_data, drop_nodata = FALSE)
+    }
+}
+
+
 search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = metadata, drop_nodata = FALSE) {
     # change argument meta_data to meta_data = idaweb:::metadata or similar argument name
     # fix meta argument
@@ -561,8 +597,8 @@ check_z_arg <- function(z) {
 }
 
 search_by_parameter <- function(shortname, unit, group, description, 
-    language = c('en', 'de', 'fr', 'it'), 
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
+    language = c('en', 'de', 'fr', 'it'), 
     meta_data = metadata, drop_nodata = FALSE) {
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
