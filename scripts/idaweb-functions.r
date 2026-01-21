@@ -320,9 +320,8 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
 
 # TODO: add z (height above sea level)
 # TODO: add search_by_station function (station abbr, name, canton, ...)
-search_by_location <- function(x, y, z = NULL, abbr = NULL,
-    name = NULL, canton = NULL, meta_data = metadata, 
-    drop_nodata = FALSE) {
+search_by_location <- function(x, y, z, abbr, name, canton, 
+    meta_data = metadata, drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
     # ch_x & ch_y: same as above BUT additionally, only 100-thousands 
@@ -343,6 +342,7 @@ search_by_location <- function(x, y, z = NULL, abbr = NULL,
         if (!is.null(sft <- attr(meta_data, 'search_location'))) {
             stop('Fix already searched by location')
         }
+        search_location <- list()
         # get number of stations
         n_stations <- nrow(meta_data$stations)
         # TODO: improve these if/else tests! and capture errors
@@ -353,6 +353,7 @@ search_by_location <- function(x, y, z = NULL, abbr = NULL,
             # subset by longitude
             s_lon <- meta_data$stations$station_coordinates_wgs84_lon 
             i_x <- unlist(lapply(xv, \(v) s_lon >= v[1] & s_lon <= v[2]))
+            search_location <- c(search_location, list(x = x))
         }
         # check y/lat
         if (is.null(yv)) {
@@ -361,6 +362,7 @@ search_by_location <- function(x, y, z = NULL, abbr = NULL,
             # subset by latitude
             s_lat <- meta_data$stations$station_coordinates_wgs84_lat 
             i_y <- unlist(lapply(yv, \(v) s_lat >= v[1] & s_lat <= v[2]))
+            search_location <- c(search_location, list(y = y))
         }
         # check z/elevation
         if (is.null(zv)) {
@@ -369,25 +371,29 @@ search_by_location <- function(x, y, z = NULL, abbr = NULL,
             # subset by elevation
             s_el <- meta_data$stations$station_height_masl
             i_z <- unlist(lapply(zv, \(v) s_el >= v[1] & s_el <= v[2]))
+            search_location <- c(search_location, list(z = z))
         }
         # check abbr
-        if (is.null(abbr)) {
+        if (is.missing(abbr) || is.null(abbr)) {
             i_abbr <- rep(TRUE, n_stations)
         } else {
             i_abbr <- meta_data$stations$station_abbr %in% abbr
+            search_location <- c(search_location, list(abbr = abbr))
         }
         # check name
-        if (is.null(name)) {
+        if (is.missing(name) || is.null(name)) {
             i_name <- rep(TRUE, n_stations)
         } else {
             i_name <- unlist(lapply(name, fuzzy_search, 
                 meta_data$stations$station_name, return_logical = TRUE))
+            search_location <- c(search_location, list(name = name))
         }
         # check canton
-        if (is.null(canton)) {
+        if (is.missing(canton) || is.null(canton)) {
             i_canton <- rep(TRUE, n_stations)
         } else {
             i_canton <- meta_data$stations$station_canton %in% canton
+            search_location <- c(search_location, list(canton = canton))
         }
         # combine all
         i_ok <- i_x & i_y & i_z & i_abbr & i_name & i_canton
@@ -435,8 +441,7 @@ search_by_location <- function(x, y, z = NULL, abbr = NULL,
             data_since = data_since,
             data_till = data_till,
             search_fromto = attr(meta_data, 'search_fromto'),
-            search_location = list(x = x, y = y, z = z, abbr = abbr,
-                name = name, canton = canton),
+            search_location = search_location
             search_parameters = attr(meta_data, 'search_parameters')
         )
     } else {
