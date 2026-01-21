@@ -156,6 +156,41 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
     }
 }
 
+parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
+    if (inherits(meta_data, 'ms_metadata')) {
+        out <- meta_data$parameters
+        if (!is.null(cols)) {
+            out <- out[, cols]
+            if (uniq) {
+                out <- unique(out)
+            }
+        }
+    } else if (is.list(meta_data)) {
+        out <- sapply(meta_data, parameters, simplify = FALSE)
+    } else {
+        stop('argument "meta_data" is not valid!')
+    }
+    out
+}
+stations <- function(meta_data) {
+    if (inherits(meta_data, 'ms_metadata')) {
+        meta_data$stations
+    } else if (is.list(meta_data)) {
+        sapply(meta_data, stations, simplify = FALSE)
+    } else {
+        stop('argument "meta_data" is not valid!')
+    }
+}
+datainventory <- function(meta_data) {
+    if (inherits(meta_data, 'ms_metadata')) {
+        meta_data$datainventory
+    } else if (is.list(meta_data)) {
+        sapply(meta_data, datainventory, simplify = FALSE)
+    } else {
+        stop('argument "meta_data" is not valid!')
+    }
+}
+
 ## hier weiter!!!
 # TODO:
 #   search functions
