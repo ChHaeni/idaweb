@@ -579,8 +579,8 @@ search_by_parameter <- function(shortname, unit, group, description,
         }
         if (!missing(group)) {
             # search by group (vector)
-            ind <- unlist(lapply(group, grep, sub_paras[[paste0('parameter_group_', 
-                    language)]]))
+            ind <- unlist(lapply(group, fuzzy_search,
+                    sub_paras[[paste0('parameter_group_', language)]]))
             sub_paras <- sub_paras[unique(ind), ]
             search_parameters <- c(search_parameters, list(group = group))
         }
