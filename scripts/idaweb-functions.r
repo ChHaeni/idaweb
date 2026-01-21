@@ -51,9 +51,15 @@ ms_url <- function(...) {
 # fetch available MeteoSwiss Open Data
 # run to show all supported collections: collections(TRUE)
 collections <- function(set_name = NULL) {
-    # all ground-base measurement sets
-    set_names <- c('smn', 'smn-precip', 'smn-tower', 'nime', 'tot', 
-        'pollen', 'obs', 'phenology')
+    if (is.list(set_name)) {
+        set_names <- sub('.*\\.ogd-', '', names(set_name))
+    } else if (!is.null(set_name) && is.character(set_name)) {
+        set_names <- set_name
+    } else {
+        # all ground-base measurement sets
+        set_names <- c('smn', 'smn-precip', 'smn-tower', 'nime', 'tot', 
+            'pollen', 'obs', 'phenology')
+    }
     # loop over sets
     out <- lapply(set_names, \(x) {
         # fix url
