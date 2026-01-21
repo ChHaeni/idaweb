@@ -117,7 +117,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                     # ?
                 }
                 # download file
-                local_file <- dl_data(file_url, file_checksum, cache_dir = cache_dir)
+                local_file <- .dl_data(file_url, file_checksum, cache_dir = cache_dir)
                 out <- read.table(local_file, sep = ';', header = TRUE, fill = TRUE,
                         fileEncoding = 'Windows-1252', comment.char = '', quote = '"'
                     )
@@ -828,7 +828,7 @@ search_by_parameter <- function(shortname, unit, group, description,
 # x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_data = metadata[[7]])
 # xx <- .get_filenames(x1)
 
-.get_files <- function(x, cache_dir = tempdir()) {
+.get_files <- function(x, cache_dir = tempdir(), force_cache = FALSE) {
     # check if more than one collection
     # also check class
     # get collection
@@ -847,9 +847,9 @@ search_by_parameter <- function(shortname, unit, group, description,
                     out <- lapply(l$file_list, \(fl) {
                     # what if missing?
                     if (fl$filename %in% names(info)) {
-                        dl_data(met_url(cl, '/', l$station, '/', fl$filename), 
+                        .dl_data(met_url(cl, '/', l$station, '/', fl$filename), 
                             checksum = info[[fl$filename]][['file:checksum']], 
-                            cache_dir = cache_dir)
+                            cache_dir = cache_dir, force_cache = force_cache)
                     } else {
                         warning('file "', fl$filename, '" cannot be downloaded')
                         NULL
@@ -876,14 +876,16 @@ search_by_parameter <- function(shortname, unit, group, description,
 
 require(data.table)
 
-get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE) {
+get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE, 
+    force_cache = FALSE) {
     if (inherits(meta_data, 'met_metadata')) {
         # get filenames etc.
         meta_data <- .get_filenames(meta_data)
     }
     if (inherits(meta_data, 'file_list')) {
         # get files
-        meta_data <- .get_files(meta_data, cache_dir = cache_dir)
+        meta_data <- .get_files(meta_data, cache_dir = cache_dir, 
+            force_cache = force_cache)
     }
     if (inherits(meta_data, 'dl_files')) {
         # get data from files
@@ -1118,11 +1120,16 @@ print_dense <- function(x, ntop = 6, nbottom = ntop, center_sep = '---',
 
 # helper function to download data
 # and get path to local file
-dl_data <- function(url, checksum = NULL, cache_dir = tempdir()) {
+.dl_data <- function(url, checksum = NULL, cache_dir = tempdir(), 
+    force_cache = FALSE) {
     # get data name
     data_name <- basename(url)
     # check if data is already available locally
-    local_file <- getOption(data_name)
+    if (force_cache) {
+        local_file <- NULL
+    } else {
+        local_file <- getOption(data_name)
+    }
     # check if cache_dir matches
     if (is.null(local_file)) {
         # check if directory exists
