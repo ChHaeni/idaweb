@@ -1298,6 +1298,8 @@ if (FALSE) {
     sup
 
     # get meta data
+    load('~/repos/3_Scripts/8_meteoswiss/data/metadata.rda')
+    path_cache <- '~/repos/3_Scripts/8_meteoswiss/cached'
     # args(get_metadata)
     meta_datainv <- get_metadata(sup, 'data', cache_dir = path_cache)
     meta_stations <- get_metadata(sup, 'stat', cache_dir = path_cache)
@@ -1332,5 +1334,6 @@ if (FALSE) {
     names(metadata) <- sup
     # save(metadata, file = 'data/metadata.rda')
     save(metadata, file = '~/repos/3_Scripts/8_meteoswiss/data/metadata.rda')
+
 }
 
