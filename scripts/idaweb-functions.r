@@ -662,7 +662,7 @@ search_by_parameter <- function(shortname, unit, group, description,
 
 # -> convenience functions => show_stations, show_parameters
 
-.get_filenames <- function(x, from, to, now, pre, yd12, cy_jan) {
+.file_names <- function(x, from, to, now, pre, yd12, cy_jan) {
     # update frequency (https://opendatadocs.meteoswiss.ch/general/download#update-frequency)
     # historical    (meas. start until 31.12 last year): once a year        (m, d, h, t)
     # recent        (1.1. current year until yesterday): daily at 12UTC     (m, d, h, t)
@@ -741,7 +741,7 @@ search_by_parameter <- function(shortname, unit, group, description,
 }
 
 # add function to get data
-get_filenames <- function(meta_data) {
+.get_filenames <- function(meta_data) {
     # FIXME: => more than one collection! => loop recursively
     # meta_data = search_by_parameter(group = 'wind', granularity = 'T', meta_data = metadata[[7]])
     di <- meta_data$datainventory
@@ -773,15 +773,15 @@ get_filenames <- function(meta_data) {
     structure(c(
         list(collection = collection),
         lapply(dsplit, \(x) {
-            .get_filenames(x, from, to, now, pre, yesterday_12UTC, current_year_jan1)
+            .file_names(x, from, to, now, pre, yesterday_12UTC, current_year_jan1)
         })
     ), class = 'file_list')
 }
 
 # x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_data = metadata[[7]])
-# xx <- get_filenames(x1)
+# xx <- .get_filenames(x1)
 
-get_files <- function(x, cache_dir = tempdir()) {
+.get_files <- function(x, cache_dir = tempdir()) {
     # check if more than one collection
     # also check class
     # get collection
@@ -816,7 +816,7 @@ get_files <- function(x, cache_dir = tempdir()) {
     ), class = 'dl_files')
 }
 
-# yy <- get_files(xx[1:5])
+# yy <- .get_files(xx[1:5])
 
 # x <- yy[1:2]
 
@@ -828,7 +828,26 @@ get_files <- function(x, cache_dir = tempdir()) {
 # names(xy$assets)
 
 require(data.table)
-get_data <- function(x, as_DT = TRUE) {
+
+get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE) {
+    if (inherits(meta_data, 'ms_metadata')) {
+        # get filenames etc.
+        meta_data <- .get_filenames(meta_data)
+    }
+    if (inherits(meta_data, 'file_list')) {
+        # get files
+        meta_data <- .get_files(meta_data, cache_dir = cache_dir)
+    }
+    if (inherits(meta_data, 'dl_files')) {
+        # get data from files
+        .get_data(meta_data, as_DT = as_DT)
+    } else {
+        # loop over list
+        sapply(meta_data, get_data, simplify = FALSE)
+    }
+}
+
+.get_data <- function(x, as_DT = TRUE) {
     # check class & check if more than one collection
     # loop over splits
     out <- lapply(x[-1], \(sp) {
