@@ -477,7 +477,7 @@ search_by_location <- function(x, y, z, abbr, name, canton,
             data_since = data_since,
             data_till = data_till,
             search_fromto = attr(meta_data, 'search_fromto'),
-            search_location = search_location
+            search_location = search_location,
             search_parameters = attr(meta_data, 'search_parameters')
         )
     } else {
