@@ -240,7 +240,7 @@ fix_meta_arg <- function(meta) {
 }
 
 # search wrapper
-met_search(
+met_search <- function(
     # by datetime
     from, to, tz = get_tzone(from, to), 
     # by location
