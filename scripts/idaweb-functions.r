@@ -253,22 +253,22 @@ met_search <- function(
     meta_data = metadata, drop_nodata = FALSE
 ) {
     # first search by location
-    if (!all(is.missing(x), is.missing(y), is.missing(z), is.missing(abbr),
-            is.missing(name), is.missing(canton))) {
+    if (!all(missing(x), missing(y), missing(z), missing(abbr),
+            missing(name), missing(canton))) {
         meta_data <- search_by_location(x = x, y = y, z = z, abbr = abbr, 
             name = name, canton = canton, meta_data = meta_data, 
             drop_nodata = FALSE)
     }
     # second serach by parameter
-    if (!all(is.missing(shortname), is.missing(unit), is.missing(group), 
-            is.missing(description), is.missing(granularity))) {
+    if (!all(missing(shortname), missing(unit), missing(group), 
+            missing(description), missing(granularity))) {
         meta_data <- search_by_parameter(shortname = shortname, unit = unit, 
             group = group, description = description, language = language, 
             granularity = granularity, meta_data = meta_data, 
             drop_nodata = FALSE)
     }
     # third search by date/time
-    if (!all(is.missing(from), is.missing(to))) {
+    if (!all(missing(from), missing(to))) {
         meta_data <- search_by_datetime(from = from, to = to, tz = tz, 
             meta_data = meta_data, drop_nodata = FALSE)
     }
@@ -410,14 +410,14 @@ search_by_location <- function(x, y, z, abbr, name, canton,
             search_location <- c(search_location, list(z = z))
         }
         # check abbr
-        if (is.missing(abbr) || is.null(abbr)) {
+        if (missing(abbr) || is.null(abbr)) {
             i_abbr <- rep(TRUE, n_stations)
         } else {
             i_abbr <- meta_data$stations$station_abbr %in% abbr
             search_location <- c(search_location, list(abbr = abbr))
         }
         # check name
-        if (is.missing(name) || is.null(name)) {
+        if (missing(name) || is.null(name)) {
             i_name <- rep(TRUE, n_stations)
         } else {
             i_name <- unlist(lapply(name, fuzzy_search, 
@@ -425,7 +425,7 @@ search_by_location <- function(x, y, z, abbr, name, canton,
             search_location <- c(search_location, list(name = name))
         }
         # check canton
-        if (is.missing(canton) || is.null(canton)) {
+        if (missing(canton) || is.null(canton)) {
             i_canton <- rep(TRUE, n_stations)
         } else {
             i_canton <- meta_data$stations$station_canton %in% canton
