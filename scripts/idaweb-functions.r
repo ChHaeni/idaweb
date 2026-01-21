@@ -167,7 +167,8 @@ parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
             }
         }
     } else if (is.list(meta_data)) {
-        out <- sapply(meta_data, parameters, simplify = FALSE)
+        out <- sapply(meta_data, parameters, cols = cols, uniq = uniq, 
+            simplify = FALSE)
     } else {
         stop('argument "meta_data" is not valid!')
     }
@@ -892,7 +893,8 @@ get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE,
         .get_data(meta_data, as_DT = as_DT)
     } else {
         # loop over list
-        sapply(meta_data, get_data, simplify = FALSE)
+        sapply(meta_data, get_data, cache_dir = cache_dir, as_DT = as_DT
+            force_cache = force_cache, simplify = FALSE)
     }
 }
 
