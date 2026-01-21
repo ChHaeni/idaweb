@@ -252,7 +252,7 @@ met_search <- function(
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
     language = c('en', 'de', 'fr', 'it'), 
     # all
-    meta_data = metadata, drop_nodata = FALSE
+    meta_data = metadata, drop_nodata = TRUE
 ) {
     # first search by location
     if (!all(missing(x), missing(y), missing(z), missing(abbr),
@@ -893,7 +893,7 @@ get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE,
         .get_data(meta_data, as_DT = as_DT)
     } else {
         # loop over list
-        sapply(meta_data, get_data, cache_dir = cache_dir, as_DT = as_DT
+        sapply(meta_data, get_data, cache_dir = cache_dir, as_DT = as_DT,
             force_cache = force_cache, simplify = FALSE)
     }
 }
