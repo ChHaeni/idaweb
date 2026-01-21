@@ -320,8 +320,8 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
 
 # TODO: add z (height above sea level)
 # TODO: add search_by_station function (station abbr, name, canton, ...)
-search_by_location <- function(x, y, z = NULL, station_abbr = NULL,
-    station_name = NULL, station_canton = NULL, meta_data = metadata, 
+search_by_location <- function(x, y, z = NULL, abbr = NULL,
+    name = NULL, canton = NULL, meta_data = metadata, 
     drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
@@ -370,24 +370,24 @@ search_by_location <- function(x, y, z = NULL, station_abbr = NULL,
             s_el <- meta_data$stations$station_height_masl
             i_z <- unlist(lapply(zv, \(v) s_el >= v[1] & s_el <= v[2]))
         }
-        # check station_abbr
-        if (is.null(station_abbr)) {
+        # check abbr
+        if (is.null(abbr)) {
             i_abbr <- rep(TRUE, n_stations)
         } else {
-            i_abbr <- meta_data$stations$station_abbr %in% station_abbr
+            i_abbr <- meta_data$stations$station_abbr %in% abbr
         }
-        # check station_name
-        if (is.null(station_name)) {
+        # check name
+        if (is.null(name)) {
             i_name <- rep(TRUE, n_stations)
         } else {
-            i_name <- unlist(lapply(station_name, fuzzy_search, 
+            i_name <- unlist(lapply(name, fuzzy_search, 
                 meta_data$stations$station_name, return_logical = TRUE))
         }
-        # check station_canton
-        if (is.null(station_canton)) {
+        # check canton
+        if (is.null(canton)) {
             i_canton <- rep(TRUE, n_stations)
         } else {
-            i_canton <- meta_data$stations$station_canton %in% station_canton
+            i_canton <- meta_data$stations$station_canton %in% canton
         }
         # combine all
         i_ok <- i_x & i_y & i_z & i_abbr & i_name & i_canton
@@ -435,14 +435,14 @@ search_by_location <- function(x, y, z = NULL, station_abbr = NULL,
             data_since = data_since,
             data_till = data_till,
             search_fromto = attr(meta_data, 'search_fromto'),
-            search_location = list(x = x, y = y, z = z, station_abbr = station_abbr,
-                station_name = station_name, station_canton = station_canton),
+            search_location = list(x = x, y = y, z = z, abbr = abbr,
+                name = name, canton = canton),
             search_parameters = attr(meta_data, 'search_parameters')
         )
     } else {
         out <- sapply(meta_data, search_by_location, x = xv, y = yv, 
-            z = zv, station_abbr = station_abbr, station_name = station_name,
-            station_canton = station_canton, drop_nodata = drop_nodata, 
+            z = zv, abbr = abbr, name = name,
+            canton = canton, drop_nodata = drop_nodata, 
             simplify = FALSE
         )
         if (drop_nodata) {
