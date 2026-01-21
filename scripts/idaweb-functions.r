@@ -273,6 +273,11 @@ met_search <- function(
         meta_data <- search_by_datetime(from = from, to = to, tz = tz, 
             meta_data = meta_data, drop_nodata = FALSE)
     }
+    # drop empty?
+    if (drop_nodata) {
+        meta_data <- meta_data[sapply(meta_data, \(x) nrow(x$datainventory) > 0)]
+    }
+    meta_data
 }
 
 
