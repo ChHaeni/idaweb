@@ -23,6 +23,7 @@
 # -
 
 # TODO:
+# - add option to force overwrite cached data
 # - fetch data info
 # - meta data included in package -> check if update needed
 # - function to update specific or all meta data (if necessary)
