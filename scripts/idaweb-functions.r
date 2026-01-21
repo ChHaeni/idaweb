@@ -42,7 +42,7 @@
 library(httr)
 
 # add helper function to construct url
-ms_url <- function(...) {
+met_url <- function(...) {
     paste0('https://data.geo.admin.ch/', ...)
 }
 
@@ -63,19 +63,19 @@ collections <- function(set_name = NULL) {
     # loop over sets
     out <- lapply(set_names, \(x) {
         # fix url
-        get_url <- ms_url('api/stac/v1/collections/ch.meteoschweiz.ogd-', x)
+        get_url <- met_url('api/stac/v1/collections/ch.meteoschweiz.ogd-', x)
         # get info
         content(GET(get_url))
     })
     # get ids
     ids <- sapply(out, '[[', 'id')
     attr(ids, 'collections') <- out
-    structure(ids, class = 'ms_collections')
+    structure(ids, class = 'met_collections')
 }
 
 # function to get info on specific data set(s) from collection
 # e.g.: info(collections())
-# x -> either ms_collections object or a valid id
+# x -> either met_collections object or a valid id
 info <- function(x, i = NULL) {
 }
 
@@ -157,7 +157,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
 }
 
 parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
-    if (inherits(meta_data, 'ms_metadata')) {
+    if (inherits(meta_data, 'met_metadata')) {
         out <- meta_data$parameters
         if (!is.null(cols)) {
             out <- out[, cols]
@@ -173,7 +173,7 @@ parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
     out
 }
 stations <- function(meta_data) {
-    if (inherits(meta_data, 'ms_metadata')) {
+    if (inherits(meta_data, 'met_metadata')) {
         meta_data$stations
     } else if (is.list(meta_data)) {
         sapply(meta_data, stations, simplify = FALSE)
@@ -182,7 +182,7 @@ stations <- function(meta_data) {
     }
 }
 datainventory <- function(meta_data) {
-    if (inherits(meta_data, 'ms_metadata')) {
+    if (inherits(meta_data, 'met_metadata')) {
         meta_data$datainventory
     } else if (is.list(meta_data)) {
         sapply(meta_data, datainventory, simplify = FALSE)
@@ -224,12 +224,12 @@ fix_meta_arg <- function(meta) {
             )
         }
         return(meta)
-    } else if (inherits(meta, 'ms_metadata')) {
+    } else if (inherits(meta, 'met_metadata')) {
         # meta data of single collection
         return(meta)
     } else if (is.list(meta)) {
         # check list of meta data
-        check_list <- unlist(lapply(meta, inherits, 'ms_metadata'))
+        check_list <- unlist(lapply(meta, inherits, 'met_metadata'))
         if (all(check_list)) {
             # list of collections
             return(meta)
@@ -328,7 +328,7 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
                 stations = sub_stats,
                 parameters = sub_paras
             ), 
-            class = 'ms_metadata', 
+            class = 'met_metadata', 
             # pass collection
             collection = attr(meta_data, 'collection'),
             # update further attributes
@@ -466,7 +466,7 @@ search_by_location <- function(x, y, z, abbr, name, canton,
                 stations = sub_stats,
                 parameters = sub_paras
             ), 
-            class = 'ms_metadata', 
+            class = 'met_metadata', 
             # pass collection
             collection = attr(meta_data, 'collection'),
             # update further attributes
@@ -670,7 +670,7 @@ search_by_parameter <- function(shortname, unit, group, description,
                 stations = sub_stats,
                 parameters = sub_paras
             ), 
-            class = 'ms_metadata', 
+            class = 'met_metadata', 
             # pass collection
             collection = attr(meta_data, 'collection'),
             # update further attributes
@@ -832,7 +832,7 @@ search_by_parameter <- function(shortname, unit, group, description,
         list(collection = cl),
         lapply(x[-1], \(l) {
             # get info on station
-            info <- content(GET(ms_url('api/stac/v1/collections/', cl, '/items/', 
+            info <- content(GET(met_url('api/stac/v1/collections/', cl, '/items/', 
                         l$station)))$assets
             # download files
             c(
@@ -841,7 +841,7 @@ search_by_parameter <- function(shortname, unit, group, description,
                     out <- lapply(l$file_list, \(fl) {
                     # what if missing?
                     if (fl$filename %in% names(info)) {
-                        dl_data(ms_url(cl, '/', l$station, '/', fl$filename), 
+                        dl_data(met_url(cl, '/', l$station, '/', fl$filename), 
                             checksum = info[[fl$filename]][['file:checksum']], 
                             cache_dir = cache_dir)
                     } else {
@@ -863,7 +863,7 @@ search_by_parameter <- function(shortname, unit, group, description,
 
 # str(x)
 
-# xy <- content(GET(ms_url('api/stac/v1/collections/', attr(meta_data, 'collection'), '/items/',
+# xy <- content(GET(met_url('api/stac/v1/collections/', attr(meta_data, 'collection'), '/items/',
 #         tolower(di[[1]][1]))))
 # str(xy)
 # names(xy$assets)
@@ -871,7 +871,7 @@ search_by_parameter <- function(shortname, unit, group, description,
 require(data.table)
 
 get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE) {
-    if (inherits(meta_data, 'ms_metadata')) {
+    if (inherits(meta_data, 'met_metadata')) {
         # get filenames etc.
         meta_data <- .get_filenames(meta_data)
     }
@@ -928,7 +928,7 @@ get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE) {
 ## methods ----------------------------------------
 
 # print method for collections
-print.ms_collections <- function(x, ...) {
+print.met_collections <- function(x, ...) {
     # get titles
     titles <- sapply(attr(x, 'collections'), '[[', 'title')
     mt <- max(nchar(titles)) + grepl('[^a-zA-Z0-9:)( -]', titles) * 2
@@ -948,7 +948,7 @@ print.ms_collections <- function(x, ...) {
 }
 
 # print methods for meta data
-print.ms_assets <- function(x, ...) {
+print.met_assets <- function(x, ...) {
     ncs <- nchar(nms <- names(x))
     names(ncs) <- nms
     cat('-- assets --\n')
@@ -959,7 +959,7 @@ print.ms_assets <- function(x, ...) {
     invisible()
 }
 
-print.ms_datainventory <- function(x, ...) {
+print.met_datainventory <- function(x, ...) {
     cat('-- datainventory --\n')
     cat('Number of data:', length(x[[1]]), '\n')
     cat('Number of stations: ', length(unique(x[[1]])), '\n')
@@ -967,20 +967,20 @@ print.ms_datainventory <- function(x, ...) {
     print_dense(x, ...)
 }
 
-print.ms_stations <- function(x, ...) {
+print.met_stations <- function(x, ...) {
     cat('-- stations --\n')
     cat('Number of stations:', length(x[[1]]), '\n')
     print_dense(x, ...)
 }
 
-print.ms_parameters <- function(x, ...) {
+print.met_parameters <- function(x, ...) {
     cat('-- parameters --\n')
     cat('Number of parameters:', length(x[[1]]), '\n')
     cat('Granularities:', unique(x[['parameter_granularity']]), '\n')
     print_dense(x, ...)
 }
 
-print.ms_metadata <- function(x, ...) {
+print.met_metadata <- function(x, ...) {
     # shorten parameter groups
     groups <- paste(unique(x[['parameters']][['parameter_group_en']]), collapse = ',')
     if (nchar(groups) > 40) {
@@ -1308,14 +1308,14 @@ if (FALSE) {
             col_out <- structure(col$id, title = col$title, 
                 description = col$description)
             meta_data <- list(
-                assets = structure(col$assets, class = 'ms_assets'),
-                datainventory = structure(inv, class = c('ms_datainventory', 'data.frame')),
-                stations = structure(stat, class = c('ms_stations', 'data.frame')),
-                parameters = structure(para, class = c('ms_parameters', 'data.frame'))
+                assets = structure(col$assets, class = 'met_assets'),
+                datainventory = structure(inv, class = c('met_datainventory', 'data.frame')),
+                stations = structure(stat, class = c('met_stations', 'data.frame')),
+                parameters = structure(para, class = c('met_parameters', 'data.frame'))
             )
             structure(
                 meta_data,
-                class = 'ms_metadata',
+                class = 'met_metadata',
                 # update & add further attributes
                 collection = col_out,
                 stations = unique(meta_data[['stations']]$station_abbr),
