@@ -27,6 +27,44 @@ check_supported <- function(id) {
     }
 }
 
+print_dense <- function(x, ntop = 6, nbottom = ntop, center_sep = '---',
+    nchars = 10, strict = FALSE) {
+    if (is.list(x)) {
+        x <- unclass(x)
+    }
+    x <- as.data.frame(x)
+    if (nrow(x) <= ntop + nbottom) {
+        xshort <- x
+    } else {
+        xtop <- head(x, ntop)
+        xbot <- tail(x, nbottom)
+        xshort <- rbind(
+            as.data.frame(lapply(xtop, as.character)),
+            rep(center_sep, ncol(x)),
+            as.data.frame(lapply(xbot, as.character))
+        )
+        row.names(xshort)[ntop + 1] <- ' '
+        row.names(xshort)[ntop + 1 + seq_len(nbottom)] <- row.names(xbot)
+    }
+    if (strict) {
+        xout <- as.data.frame(lapply(xshort, \(z) {
+            pat <- paste0('\\s*(\\S.{', nchars - 1, '}).+')
+            sub(pat, '\\1..', z)
+        }))
+    } else {
+        xout <- as.data.frame(lapply(names(xshort), \(z) {
+            N <- max(nchars, nchar(z) - 4)
+            pat <- paste0('\\s*(\\S.{', N - 1, '}).+')
+            sub(pat, '\\1..', xshort[[z]])
+        }))
+        names(xout) <- names(xshort)
+    }
+    row.names(xout) <- row.names(xshort)
+    print.data.frame(xout, quote = FALSE)
+}
+
+
+
 
 
 ## search-data ----------------------------------------
