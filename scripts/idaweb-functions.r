@@ -37,8 +37,6 @@
 
 ##  • header ====================
 
-library(httr)
-
 # add helper function to construct url
 met_url <- function(...) {
     paste0('https://data.geo.admin.ch/', ...)
@@ -63,7 +61,7 @@ collections <- function(set_name = NULL) {
         # fix url
         get_url <- met_url('api/stac/v1/collections/ch.meteoschweiz.ogd-', x)
         # get info
-        content(GET(get_url))
+        httr::content(httr::GET(get_url))
     })
     # get ids
     ids <- sapply(out, '[[', 'id')
@@ -71,11 +69,11 @@ collections <- function(set_name = NULL) {
     structure(ids, class = 'met_collections')
 }
 
-# function to get info on specific data set(s) from collection
-# e.g.: info(collections())
-# x -> either met_collections object or a valid id
-info <- function(x, i = NULL) {
-}
+# # function to get info on specific data set(s) from collection
+# # e.g.: info(collections())
+# # x -> either met_collections object or a valid id
+# info <- function(x, i = NULL) {
+# }
 
 # get meta data
 get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters'),
@@ -94,11 +92,8 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                 format = "%Y-%m-%dT%H:%M:%OSZ", lt = FALSE
             )
             # check if package data is up-to-date
-            # load('data/metadata.rda')
             meta_last_updated <- lubridate::fast_strptime(
-                # idaweb:::metadata[[id]]$assets[[file_name]]$updated,
-                # replace me when package
-                metadata[[id]]$assets[[file_name]]$updated,
+                idaweb::metadata[[id]]$assets[[file_name]]$updated,
                 format = "%Y-%m-%dT%H:%M:%OSZ", lt = FALSE
             )
             if (last_updated > meta_last_updated) {
@@ -110,7 +105,8 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                     # TODO: add message about github issue (only first time if local
                     #           file does not exist yet)
                     # cat()
-                    warning(file_name, ' has recent changes: metadata.rda in package needs updating!')
+                    warning(file_name, ' has recent changes:',
+                        'metadata.rda in package needs updating!')
                     # ?
                 }
                 # download file
@@ -139,9 +135,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                 return(out)
             }
             nm <- sub('.+_meta_(.+)[.]csv', '\\1', file_name)
-            # return(idaweb:::metadata[[id]][[nm]])
-            # replace me when package
-            return(metadata[[id]][[nm]])
+            return(idaweb::metadata[[id]][[nm]])
         } else {
             return(invisible(NULL))
         }
@@ -190,33 +184,24 @@ datainventory <- function(meta_data) {
     }
 }
 
-## hier weiter!!!
-# TODO:
-#   search functions
-#   search by: time range, location range, parameters (fuzzy search)
-
 fix_meta_arg <- function(meta) {
     meta_arg <- deparse(substitute(meta))
     if (missing(meta)) {
-        # change once package
-        # return(idaweb:::metadata)
-        return(metadata)
+        return(idaweb::metadata)
     } else if (is.character(meta)) {
         # change once package
-        # ind <- sub('ch.meteoschweiz.ogd-', '', names(idaweb:::metadata)) %in%
-        ind <- sub('ch.meteoschweiz.ogd-', '', names(metadata)) %in%
+        ind <- sub('ch.meteoschweiz.ogd-', '', names(idaweb::metadata)) %in%
             sub('ch.meteoschweiz.ogd-', '', meta)
         if (any(ind)) {
             # collection name(s)
             if (length(meta) == 1L) {
-                meta <- metadata[[which(ind)]]
+                meta <- idaweb::metadata[[which(ind)]]
             } else {
-                meta <- metadata[ind]
+                meta <- idaweb::metadata[ind]
             }
         } else {
             meta <- switch(meta
-                # 'all' = idaweb:::metadata,
-                , 'all' = metadata
+                , 'all' = idaweb::metadata
                 # any others?
                 # error unknown
                 , stop('cannot interpret ',meta_arg ,' argument!', call. = FALSE)
@@ -249,7 +234,7 @@ met_search <- function(
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
     language = c('en', 'de', 'fr', 'it'), 
     # all
-    meta_data = metadata, drop_nodata = TRUE
+    meta_data = idaweb::metadata, drop_nodata = TRUE
 ) {
     # first search by location
     if (!all(missing(x), missing(y), missing(z), missing(abbr),
@@ -279,8 +264,8 @@ met_search <- function(
 }
 
 
-search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = metadata, drop_nodata = FALSE) {
-    # change argument meta_data to meta_data = idaweb:::metadata or similar argument name
+search_by_datetime <- function(from, to, tz = get_tzone(from, to), 
+    meta_data = idaweb::metadata, drop_nodata = FALSE) {
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
     # parse from & to
@@ -358,19 +343,16 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to), meta_data = m
     }
 }
 
-# TODO: add z (height above sea level)
-# TODO: add search_by_station function (station abbr, name, canton, ...)
 search_by_location <- function(x, y, z, abbr, name, canton, 
-    meta_data = metadata, drop_nodata = FALSE) {
+    meta_data = idaweb::metadata, drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
-    # ch_x & ch_y: same as above BUT additionally, only 100-thousands 
+    # TODO: ch_x & ch_y: same as above BUT additionally, only 100-thousands 
     #   -> distinguish between lv95 and lv03
     #   -> check x/y as required in R and possibly flip
     # only attach sf if really necessary
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
-    # change argument meta_data to meta_data = idaweb:::metadata or similar argument name
     # parse x
     xv <- check_xy_arg(x)
     # parse y
@@ -603,7 +585,7 @@ check_z_arg <- function(z) {
 search_by_parameter <- function(shortname, unit, group, description, 
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
     language = c('en', 'de', 'fr', 'it'), 
-    meta_data = metadata, drop_nodata = FALSE) {
+    meta_data = idaweb::metadata, drop_nodata = FALSE) {
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
     if ('datainventory' %in% names(meta_data)) {
@@ -705,7 +687,6 @@ search_by_parameter <- function(shortname, unit, group, description,
 # add function to bind different results together
 # add function to get data from results
 
-# -> convenience functions => show_stations, show_parameters
 
 .file_names <- function(x, from, to, now, pre, yd12, cy_jan) {
     # update frequency (https://opendatadocs.meteoswiss.ch/general/download#update-frequency)
@@ -787,8 +768,6 @@ search_by_parameter <- function(shortname, unit, group, description,
 
 # add function to get data
 .get_filenames <- function(meta_data) {
-    # FIXME: => more than one collection! => loop recursively
-    # meta_data = search_by_parameter(group = 'wind', granularity = 'T', meta_data = metadata[[7]])
     di <- meta_data$datainventory
     if (nrow(di) == 0) {
         return(list())
@@ -823,9 +802,6 @@ search_by_parameter <- function(shortname, unit, group, description,
     ), class = 'file_list')
 }
 
-# x1 <- search_by_parameter(group = 'wind', granularity = 'T', meta_data = metadata[[7]])
-# xx <- .get_filenames(x1)
-
 .get_files <- function(x, cache_dir = tempdir(), force_cache = FALSE) {
     # check if more than one collection
     # also check class
@@ -836,7 +812,7 @@ search_by_parameter <- function(shortname, unit, group, description,
         list(collection = cl),
         lapply(x[-1], \(l) {
             # get info on station
-            info <- content(GET(met_url('api/stac/v1/collections/', cl, '/items/', 
+            info <- httr::content(httr::GET(met_url('api/stac/v1/collections/', cl, '/items/', 
                         l$station)))$assets
             # download files
             c(
@@ -860,19 +836,6 @@ search_by_parameter <- function(shortname, unit, group, description,
         })
     ), class = 'dl_files')
 }
-
-# yy <- .get_files(xx[1:5])
-
-# x <- yy[1:2]
-
-# str(x)
-
-# xy <- content(GET(met_url('api/stac/v1/collections/', attr(meta_data, 'collection'), '/items/',
-#         tolower(di[[1]][1]))))
-# str(xy)
-# names(xy$assets)
-
-require(data.table)
 
 get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE, 
     force_cache = FALSE) {
@@ -1111,8 +1074,6 @@ print_dense <- function(x, ntop = 6, nbottom = ntop, center_sep = '---',
     row.names(xout) <- row.names(xshort)
     print.data.frame(xout, quote = FALSE)
 }
-# print_dense(metadata[[1]][[2]])
-# meta_parameters[[10]]
 
 
 ##  • helper functions ====================
@@ -1318,7 +1279,7 @@ if (FALSE) {
     meta_parameters <- get_metadata(sup, 'par', cache_dir = path_cache)
 
     # rebuild meta data
-    metadata <- mapply(\(col, inv, stat, para) {
+    meta_data <- mapply(\(col, inv, stat, para) {
             col_out <- structure(col$id, title = col$title, 
                 description = col$description)
             meta_data <- list(
@@ -1343,9 +1304,8 @@ if (FALSE) {
         attr(sup, 'collections'), meta_datainv, meta_stations, meta_parameters, 
         SIMPLIFY = FALSE
     )
-    names(metadata) <- sup
-    # save(metadata, file = 'data/metadata.rda')
-    save(metadata, file = '~/repos/3_Scripts/8_meteoswiss/data/metadata.rda')
+    names(meta_data) <- sup
+    save(meta_data, file = 'data/metadata.rda')
 
 }
 
