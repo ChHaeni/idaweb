@@ -1,41 +1,4 @@
 
-
-
-## NOTES ----------------------------------------
-
-# REST API docu
-# https://data.geo.admin.ch/api/stac/static/spec/v1/api.html#tag/Data
-
-# only collections from meteoswiss
-# only ids containing ogd (because of meta data & data format)
-# check data sets: https://opendatadocs.meteoswiss.ch/
-
-# ground-base measurements only
-# data sets A1 to A9
-# smn, smn-preicp, smn-tower, nime, tot, pollen, obs, phenology
-
-# note on data handling:
-# mail from support: Re: Incident INC000002367960 / Daten 2025 unter "aktuelles Jahr"
-#   Die Daten 2025 sind bis im Februar noch unter «aktuelles Jahr» zu finden.
-#   Danach werden die Daten geprüft und definitiv und unter 2020-2929 auffindbar sein.
-
-# overview on functions:
-# -
-
-# TODO:
-# - add option to convert to ibts
-# - fetch data info
-# - meta data included in package -> check if update needed
-# - function to update specific or all meta data (if necessary)
-# - download data only if not available in options
-# - one function to get data (incl. options check)
-# - show_on_map() => visualize subset on map
-# - convenience functions:
-#       * fix info()
-
-
-##  • main functions ====================
-
 # fetch available MeteoSwiss Open Data
 # run to show all supported collections: collections(TRUE)
 collections <- function(set_name = NULL) {
@@ -157,6 +120,7 @@ parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
     }
     out
 }
+
 stations <- function(meta_data) {
     if (inherits(meta_data, 'met_metadata')) {
         meta_data$stations
@@ -166,6 +130,7 @@ stations <- function(meta_data) {
         stop('argument "meta_data" is not valid!')
     }
 }
+
 datainventory <- function(meta_data) {
     if (inherits(meta_data, 'met_metadata')) {
         meta_data$datainventory
@@ -174,70 +139,5 @@ datainventory <- function(meta_data) {
     } else {
         stop('argument "meta_data" is not valid!')
     }
-}
-
-# add option to provide previous results for further subsetting
-# add function to bind different results together
-# add function to get data from results
-
-
-# "fuzzy" searching strings
-fuzzy_search <- function(pattern, string, value = FALSE, return_logical = FALSE,
-    ignore.case = all(is.na(pmatch(LETTERS, pattern)))) {
-    fuz_pat <- paste(c('', unlist(strsplit(pattern, split = '')), ''), collapse = '.*')
-    if (return_logical) {
-        grepl(fuz_pat, string, ignore.case = ignore.case)
-    } else {
-        grep(fuz_pat, string, value = value, ignore.case = ignore.case)
-    }
-}
-
-## re-build meta data ----------------------------------------
-
-if (FALSE) {
-    # TODO: make function to update metadata in package data path
-    #       -> function to get package path: system.file(package=)
-    #       -> name metadata data differently and check if exists in code
-    # check collections from MeteoSwiss
-    sup <- collections()
-    sup
-
-    # get meta data
-    load('~/repos/3_Scripts/8_meteoswiss/data/metadata.rda')
-    path_cache <- '~/repos/3_Scripts/8_meteoswiss/cached'
-    # args(get_metadata)
-    meta_datainv <- get_metadata(sup, 'data', cache_dir = path_cache)
-    meta_stations <- get_metadata(sup, 'stat', cache_dir = path_cache)
-    meta_parameters <- get_metadata(sup, 'par', cache_dir = path_cache)
-
-    # rebuild meta data
-    meta_data <- mapply(\(col, inv, stat, para) {
-            col_out <- structure(col$id, title = col$title, 
-                description = col$description)
-            meta_data <- list(
-                assets = structure(col$assets, class = 'met_assets'),
-                datainventory = structure(inv, class = c('met_datainventory', 'data.frame')),
-                stations = structure(stat, class = c('met_stations', 'data.frame')),
-                parameters = structure(para, class = c('met_parameters', 'data.frame'))
-            )
-            structure(
-                meta_data,
-                class = 'met_metadata',
-                # update & add further attributes
-                collection = col_out,
-                stations = unique(meta_data[['stations']]$station_abbr),
-                wgs84_lat = range(meta_data[['stations']]$station_coordinates_wgs84_lat),
-                wgs84_lon = range(meta_data[['stations']]$station_coordinates_wgs84_lon),
-                parameters = unique(meta_data[['parameters']]$parameter_shortname),
-                data_since = min(meta_data[['datainventory']]$data_since),
-                data_till = max(meta_data[['datainventory']]$data_till)
-            )
-        }, 
-        attr(sup, 'collections'), meta_datainv, meta_stations, meta_parameters, 
-        SIMPLIFY = FALSE
-    )
-    names(meta_data) <- sup
-    save(meta_data, file = 'data/metadata.rda')
-
 }
 

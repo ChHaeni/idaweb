@@ -1,4 +1,17 @@
 
+## fuzzy search (exported) ----------------------------------------
+
+# "fuzzy" searching strings
+fuzzy_search <- function(pattern, string, value = FALSE, return_logical = FALSE,
+    ignore.case = all(is.na(pmatch(LETTERS, pattern)))) {
+    fuz_pat <- paste(c('', unlist(strsplit(pattern, split = '')), ''), collapse = '.*')
+    if (return_logical) {
+        grepl(fuz_pat, string, ignore.case = ignore.case)
+    } else {
+        grep(fuz_pat, string, value = value, ignore.case = ignore.case)
+    }
+}
+
 ## various helper functions ----------------------------------------
 
 # add helper function to construct url

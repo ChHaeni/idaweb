@@ -1,0 +1,38 @@
+
+
+
+## NOTES ----------------------------------------
+
+# REST API docu
+# https://data.geo.admin.ch/api/stac/static/spec/v1/api.html#tag/Data
+
+# only collections from meteoswiss
+# only ids containing ogd (because of meta data & data format)
+# check data sets: https://opendatadocs.meteoswiss.ch/
+
+# ground-base measurements only
+# data sets A1 to A9
+# smn, smn-preicp, smn-tower, nime, tot, pollen, obs, phenology
+
+# note on data handling:
+# mail from support: Re: Incident INC000002367960 / Daten 2025 unter "aktuelles Jahr"
+#   Die Daten 2025 sind bis im Februar noch unter «aktuelles Jahr» zu finden.
+#   Danach werden die Daten geprüft und definitiv und unter 2020-2929 auffindbar sein.
+
+# overview on functions:
+# -
+
+# TODO:
+# - add option to convert to ibts
+# - fetch data info
+# - meta data included in package -> check if update needed
+# - function to update specific or all meta data (if necessary)
+# - download data only if not available in options
+# - one function to get data (incl. options check)
+# - show_on_map() => visualize subset on map
+# - convenience functions:
+#       * fix info()
+# add option to provide previous results for further subsetting
+# add function to bind different results together
+
+
