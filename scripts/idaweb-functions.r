@@ -23,7 +23,7 @@
 # -
 
 # TODO:
-# - add option to force overwrite cached data
+# - add option to convert to ibts
 # - fetch data info
 # - meta data included in package -> check if update needed
 # - function to update specific or all meta data (if necessary)
@@ -31,10 +31,7 @@
 # - one function to get data (incl. options check)
 # - show_on_map() => visualize subset on map
 # - convenience functions:
-#   * get_data -> rename current get_data to .get_data & wrap get_filenames, get_files &
-#       .get_data into one function
-#   * search_data -> wrapper for all search_by_* functions
-#   * parameters(), stations(), datainventory()
+#       * fix info()
 
 ## functions ----------------------------------------
 
