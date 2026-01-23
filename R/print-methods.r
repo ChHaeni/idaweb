@@ -76,8 +76,14 @@ print.met_metadata <- function(x, ...) {
     if (any(is.na(attr(x, 'wgs84_lon')))) {
         lon <- lat <- NA_character_
     } else {
-        lon <- sub('^0', ' ', sprintf('%06.3f', attr(x, 'wgs84_lon')))
-        lat <- sprintf('%06.3f', attr(x, 'wgs84_lat'))
+        lon <- sub('^0', ' ', sprintf('%06.3f', unique(attr(x, 'wgs84_lon'))))
+        lat <- sprintf('%06.3f', unique(attr(x, 'wgs84_lat')))
+        if (length(lon) == 2) {
+            lon <- paste(lon, collapse = ' .. ')
+        }
+        if (length(lat) == 2) {
+            lat <- paste(lat, collapse = ' .. ')
+        }
     }
     # get collection info
     col <- attr(x, 'collection')
@@ -99,8 +105,8 @@ print.met_metadata <- function(x, ...) {
     cat('~~~\n')
     cat('  data since', format(attr(x, 'data_since')), '\n')
     cat('  data until', data_till, '\n')
-    cat('  wgs84 lon:', paste(lon, collapse = ' .. '), '\n')
-    cat('  wgs84 lat:', paste(lat, collapse = ' .. '), '\n')
+    cat('  wgs84 lon:', lon, '\n')
+    cat('  wgs84 lat:', lat, '\n')
     cat('  station abbr.:', stations, '\n')
     cat('  param. groups:', groups, '\n')
     cat('  granularities:', unique(x[['parameters']][['parameter_granularity']]), '\n')
