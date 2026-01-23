@@ -30,6 +30,46 @@ collections <- function(set_name = NULL) {
 # info <- function(x, i = NULL) {
 # }
 
+parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
+    if (inherits(meta_data, 'met_metadata')) {
+        out <- meta_data$parameters
+        if (!is.null(cols)) {
+            out <- out[, cols]
+            if (uniq) {
+                out <- unique(out)
+            }
+        }
+    } else if (is.list(meta_data)) {
+        out <- sapply(meta_data, parameters, cols = cols, uniq = uniq, 
+            simplify = FALSE)
+    } else {
+        stop('argument "meta_data" is not valid!')
+    }
+    out
+}
+
+stations <- function(meta_data) {
+    if (inherits(meta_data, 'met_metadata')) {
+        meta_data$stations
+    } else if (is.list(meta_data)) {
+        sapply(meta_data, stations, simplify = FALSE)
+    } else {
+        stop('argument "meta_data" is not valid!')
+    }
+}
+
+datainventory <- function(meta_data) {
+    if (inherits(meta_data, 'met_metadata')) {
+        meta_data$datainventory
+    } else if (is.list(meta_data)) {
+        sapply(meta_data, datainventory, simplify = FALSE)
+    } else {
+        stop('argument "meta_data" is not valid!')
+    }
+}
+
+## unexported ----------------------------------------
+
 # get meta data
 get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters'),
     cache_dir = tempdir()) {
@@ -100,44 +140,6 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
         names(out) <- id
         # remove invalid
         return(out[!sapply(out, is.null)])
-    }
-}
-
-parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
-    if (inherits(meta_data, 'met_metadata')) {
-        out <- meta_data$parameters
-        if (!is.null(cols)) {
-            out <- out[, cols]
-            if (uniq) {
-                out <- unique(out)
-            }
-        }
-    } else if (is.list(meta_data)) {
-        out <- sapply(meta_data, parameters, cols = cols, uniq = uniq, 
-            simplify = FALSE)
-    } else {
-        stop('argument "meta_data" is not valid!')
-    }
-    out
-}
-
-stations <- function(meta_data) {
-    if (inherits(meta_data, 'met_metadata')) {
-        meta_data$stations
-    } else if (is.list(meta_data)) {
-        sapply(meta_data, stations, simplify = FALSE)
-    } else {
-        stop('argument "meta_data" is not valid!')
-    }
-}
-
-datainventory <- function(meta_data) {
-    if (inherits(meta_data, 'met_metadata')) {
-        meta_data$datainventory
-    } else if (is.list(meta_data)) {
-        sapply(meta_data, datainventory, simplify = FALSE)
-    } else {
-        stop('argument "meta_data" is not valid!')
     }
 }
 
