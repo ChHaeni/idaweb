@@ -54,12 +54,13 @@ print.met_parameters <- function(x, ...) {
 
 print.met_metadata <- function(x, ...) {
     # shorten parameter groups
-    groups <- paste(unique(x[['parameters']][['parameter_group_en']]), collapse = ',')
+    groups <- paste(ug <- unique(x[['parameters']][['parameter_group_en']]), collapse = ',')
     if (nchar(groups) > 40) {
         groups <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', groups)
     }
     # shorten stations
-    stations <- paste(unique(x[['stations']][['station_abbr']]), collapse = ',')
+    # stations <- paste(unique(x[['stations']][['station_abbr']]), collapse = ',')
+    stations <- paste(us <- unique(x[['stations']][['station_name']]), collapse = ',')
     if (nchar(stations) > 40) {
         stations <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', stations)
     }
@@ -107,9 +108,23 @@ print.met_metadata <- function(x, ...) {
     cat('  data until', data_till, '\n')
     cat('  wgs84 lon:', lon, '\n')
     cat('  wgs84 lat:', lat, '\n')
-    cat('  station abbr.:', stations, '\n')
-    cat('  param. groups:', groups, '\n')
-    cat('  granularities:', unique(x[['parameters']][['parameter_granularity']]), '\n')
+    # cat('  station abbr.:', stations, '\n')
+    if (length(us) == 1) {
+        cat('  station name:', stations, '\n')
+    } else {
+        cat('  station names:', stations, '\n')
+    }
+    if (length(ug) == 1) {
+        cat('  param. group:', groups, '\n')
+    } else {
+        cat('  param. groups:', groups, '\n')
+    }
+    grans <- unique(x[['parameters']][['parameter_granularity']])
+    if (length(grans) == 1) {
+        cat('  granularity:', grans, '\n')
+    } else {
+        cat('  granularities:', grans, '\n')
+    }
     # check search attributes
     sft <- attr(x, 'search_fromto')
     slo <- attr(x, 'search_location')
