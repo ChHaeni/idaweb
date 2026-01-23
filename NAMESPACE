@@ -1,4 +1,3 @@
-useDynLib(idaweb)
 # exports
 export(collections)
 export(datainventory)
