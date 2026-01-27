@@ -327,14 +327,36 @@ fa_st <- function(x, tz) {
 
 ##  • read downloaded files ====================
 
-.get_data <- function(x, as_DT = TRUE) {
-    # check class & check if more than one collection
+# https://opendatadocs.meteoswiss.ch/general/download#data-granularity
+# all times in UTC
+# t: The sum, mean or max/min of the last 10 minutes (ReferenceTS 16:00 = 15:50:01 to 16:00:00)
+# h: The sum, mean or max/min of the last six 10min-values (ReferenceTS 16:00 = 15:10 to 16:00). Please note: Hourly values before 2018 were calculated differently based on the SYNOP schedule (ReferenceTS 16:00 = 15:50 to 16:40)!
+# d: For most parameters the sum, mean or max/min from 00:00 to 23:50 of the according date. Exception for precipitation and snow (manual measurement times used for consistency) where the interval is 6:00 UTC until 5:50 UTC tomorrow (ReferenceTS 22.6.2023 = 22.6.2023 6:10 UTC to 23.6.2023 6:00 UTC)
+# m: The sum, mean or max/min of the whole month from 1st to last day of month (ReferenceTS 1.6.2023 = 1.6.2023 00:10 UTC to 30.6.2023 24:00 UTC)
+# y: The sum, mean or max/min of the whole year (ReferenceTS 1.1.2023 = 1.1.2023 00:10 UTC to 31.12.2023 24:00 UTC)
+
+.get_data <- function(x, single_timestamp = TRUE, 
+    output = c('data.frame', 'data.table', 'ibts')) {
+    # check conversion
+    if (output[1] == 'ibts') {
+        single_timestamp <- FALSE
+    }
     # loop over splits
     out <- lapply(x[-1], \(sp) {
         # time format
         time_format <- switch(sp$granularity
             , 'h' = 
             , 't' = '%d.%m.%Y %H:%M'
+            , stop('fix current granularity in `get_data()`')
+        )
+        # fix times
+        check_2018 <- FALSE
+        delta_t <- switch(sp$granularity
+            , 't' = c(-10 * 60, 0)
+            , 'h' = {
+                check_2018 <- TRUE
+                c(-60 * 60, 0)
+            }
             , stop('fix current granularity in `get_data()`')
         )
         # loop over files
@@ -346,19 +368,43 @@ fa_st <- function(x, tz) {
             # parse times & subset
             dat[, time := lubridate::fast_strptime(reference_timestamp, 
                 format = time_format, lt = FALSE)][, reference_timestamp := NULL]
-            # subset
-            dat[time >= fl$from & time <= fl$to]
+            # add st/et
+            dat[, et := time + delta_t[2]]
+            dat[, st := time + delta_t[1]]
+            if (check_2018) {
+                # fix hourly data before 2018
+                h_shift <- 40 * 60
+                dat[et < lubridate::fast_strptime('01.01.2018', format = '%d.%m.%Y',
+                    lt = FALSE, tz = 'UTC'), ':='(st = st + h_shift, et = et + h_shift)]
+            }
+            # subset date/time
+            dat[st >= fl$from & et <= fl$to]
         })
         dout <- rbindlist(d_list, fill = TRUE)
-        # sort by time as first column
-        setcolorder(dout, 'time')
-        setorder(dout, 'time')
+        if (single_timestamp) {
+            # remove st/et
+            dout[, c('st', 'et') := NULL]
+            # sort by time as first column
+            setcolorder(dout, 'time')
+            setorder(dout, 'time')
+        } else {
+            # remove time
+            dout[, time := NULL]
+            # sort by st/et as first column
+            setcolorder(dout, c('st', 'et'))
+            setorder(dout, 'et')
+        }
         # return
-        dout
+        dout[]
     })
     # return list
-    if (!as_DT) {
-        out <- lapply(out, as.data.frame)
+    if (output[1] != 'data.table') {
+        as_fun <- try(get(paste0('as.', output[1]), mode = 'function'))
+        if (inherits(as_fun, 'try-error')) {
+            warning('argument "output" cannot be interpreted => falling back to data.frame!')
+            as_fun <- as.data.frame
+        }
+        out <- lapply(out, as_fun)
     }
     out
 }

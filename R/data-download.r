@@ -1,8 +1,9 @@
 
 ## download data from search result ----------------------------------------
 
-get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE, 
-    force_cache = FALSE) {
+get_data <- function(meta_data, cache_dir = tempdir(), force_cache = FALSE, 
+    output = c('data.frame', 'data.table', 'ibts'), single_timestamp = TRUE
+    ) {
     if (inherits(meta_data, 'met_metadata')) {
         # get filenames etc.
         meta_data <- .get_filenames(meta_data)
@@ -14,11 +15,11 @@ get_data <- function(meta_data, cache_dir = tempdir(), as_DT = TRUE,
     }
     if (inherits(meta_data, 'dl_files')) {
         # get data from files
-        .get_data(meta_data, as_DT = as_DT)
+        .get_data(meta_data, output = output, single_timestamp = single_timestamp)
     } else {
         # loop over list
-        sapply(meta_data, get_data, cache_dir = cache_dir, as_DT = as_DT,
-            force_cache = force_cache, simplify = FALSE)
+        sapply(meta_data, get_data, cache_dir = cache_dir, output = output,
+            single_timestamp = single_timestamp, force_cache = force_cache, simplify = FALSE)
     }
 }
 
