@@ -9,13 +9,12 @@ if (!dir.exists(path_cache)) {
     stop('path "', path_cache, '" is not accessible!')
 }
 
-## testing ----------------------------------------
 
-##  • collections & meta data ====================
+## collections & meta data ----------------------------------------
 
-# fetch info for  available collections
-col <- collections()
-col
+# # fetch info for  available collections
+# col <- collections()
+# col
 
 # get meta data
 # args(get_metadata)
@@ -33,11 +32,21 @@ col
 # md <- idaweb:::get_metadata(col[1], cache_dir = path_cache)
 # meta_parameters <- idaweb:::get_metadata(col[[1]], 'par', cache_dir = path_cache)
 
-dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[7])
+
+## search by ----------------------------------------
+
+dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[1])
 dt <- search_by_datetime('01.09.2024 to 31.12.2025', meta_data = dl)
-# as.data.table(dt[[1]]$parameters)[parameter_granularity == 'H']
-as.data.table(dt[[1]]$parameters)[parameter_granularity == 'H' & parameter_group_en == 'Radiation']
-as.data.table(dt[[1]]$parameters)[parameter_granularity == 'H' & parameter_group_en == 'Temperature']
+# p <- parameters(dt[[1]])
+# p2 <- parameters(dt[[1]], TRUE)
+# s <- stations(dt[[1]])
+# s2 <- stations(dt[[1]], TRUE)
+# stations(dt[[1]], TRUE)[, station_name]
+# datainventory(dt[[1]])
+# datainventory(dt[[1]], TRUE)
+parameters(dt[[1]], TRUE)[parameter_granularity == 'H']
+parameters(dt[[1]], TRUE)[parameter_granularity == 'H' & parameter_group_en == 'Radiation']
+parameters(dt[[1]], TRUE)[parameter_granularity == 'H' & parameter_group_en == 'Temperature']
 dp <- search_by_parameter(meta_data = dt, granularity = 'H', 
     shortname = c('gre000h0', 'tre200h0'))
 

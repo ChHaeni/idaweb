@@ -30,7 +30,7 @@ collections <- function(set_name = NULL) {
 # info <- function(x, i = NULL) {
 # }
 
-parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
+parameters <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
         out <- meta_data$parameters
         if (!is.null(cols)) {
@@ -39,8 +39,11 @@ parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
                 out <- unique(out)
             }
         }
+        if (as_dt) {
+            out <- as.data.table(out)
+        }
     } else if (is.list(meta_data)) {
-        out <- sapply(meta_data, parameters, cols = cols, uniq = uniq, 
+        out <- sapply(meta_data, parameters, as_dt = as_dt, cols = cols, uniq = uniq, 
             simplify = FALSE)
     } else {
         stop('argument "meta_data" is not valid!')
@@ -48,24 +51,46 @@ parameters <- function(meta_data, cols = NULL, uniq = !is.null(cols)) {
     out
 }
 
-stations <- function(meta_data) {
+stations <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
-        meta_data$stations
+        out <- meta_data$stations
+        if (!is.null(cols)) {
+            out <- out[, cols]
+            if (uniq) {
+                out <- unique(out)
+            }
+        }
+        if (as_dt) {
+            out <- as.data.table(out)
+        }
     } else if (is.list(meta_data)) {
-        sapply(meta_data, stations, simplify = FALSE)
+        out <- sapply(meta_data, stations, as_dt = as_dt, cols = cols, uniq = uniq, 
+            simplify = FALSE)
     } else {
         stop('argument "meta_data" is not valid!')
     }
+    out
 }
 
-datainventory <- function(meta_data) {
+datainventory <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
-        meta_data$datainventory
+        out <- meta_data$datainventory
+        if (!is.null(cols)) {
+            out <- out[, cols]
+            if (uniq) {
+                out <- unique(out)
+            }
+        }
+        if (as_dt) {
+            out <- as.data.table(out)
+        }
     } else if (is.list(meta_data)) {
-        sapply(meta_data, datainventory, simplify = FALSE)
+        out <- sapply(meta_data, datainventory, as_dt = as_dt, cols = cols, uniq = uniq, 
+            simplify = FALSE)
     } else {
         stop('argument "meta_data" is not valid!')
     }
+    out
 }
 
 ## unexported ----------------------------------------
