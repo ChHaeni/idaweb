@@ -335,14 +335,22 @@ fa_st <- function(x, tz) {
 # m: The sum, mean or max/min of the whole month from 1st to last day of month (ReferenceTS 1.6.2023 = 1.6.2023 00:10 UTC to 30.6.2023 24:00 UTC)
 # y: The sum, mean or max/min of the whole year (ReferenceTS 1.1.2023 = 1.1.2023 00:10 UTC to 31.12.2023 24:00 UTC)
 
-.get_data <- function(x, single_timestamp = TRUE, as_list = FALSE,
-    outclass = c('data.table', 'data.frame', 'ibts')) {
+.get_data <- function(x, single_timestamp = TRUE, 
+    outclass = c('data.table', 'data.frame', 'ibts', 'df', 'dt'),
+    outstruc = c('split-all', 'by-station', 'by-granularity', 'cbind-all')
+    ) {
     # check conversion
     if (outclass[1] == 'ibts') {
         if (!requireNamespace('ibts', quietly = TRUE)) {
             stop('package ibts is missing - install package from https://github.com/ChHaeni/ibts')
         }
-        as_list <- TRUE
+        if (outstruc[1] != 'split-all') {
+            warning('conversion to ibts implies "split-all" output structure (ignoring argument)')
+        }
+        outstruc <- 'split-all'
+        if (single_timestamp) {
+            warning('conversion to ibts requires single_timestamp = FALSE (ignoring argument)')
+        }
         single_timestamp <- FALSE
     }
     # get metadata
@@ -442,17 +450,17 @@ fa_st <- function(x, tz) {
             # remove st/et
             dout[, c('st', 'et') := NULL]
             # sort by time as first column
-            setcolorder(dout, 'time')
+            setcolorder(dout, c('time', 'station_abbr', 'granularity'))
             setorder(dout, 'time')
         } else {
             # remove time
             dout[, time := NULL]
             # sort by st/et as first column
-            setcolorder(dout, c('st', 'et'))
+            setcolorder(dout, c('st', 'et', 'station_abbr', 'granularity'))
             setorder(dout, 'et')
         }
         # return with correct class
-        if (outclass[1] == 'data.frame') {
+        if (outclass[1] %in% c('data.frame', 'df')) {
             dout <- as.data.frame(dout)
         } else if (outclass[1] == 'ibts') {
             dout <- ibts::as.ibts(dout)
@@ -465,13 +473,108 @@ fa_st <- function(x, tz) {
         attr(dout, 'stations') <- stats[stats$station_abbr == toupper(sp$station),]
         dout
     }) # end of outer lapply
-    # bind together and 
-    if (!as_list) {
-        # IDEA: outstruc = c('all-split', 'by-station', 'by-granularity', 'unite')
-        browser()
-    }
+    # fix output structure
+    switch(outstruc[1]
+        # list output gathered by station
+        , 'by-station' = {
+            # get stations
+            stat <- sub('/.$', '', names(out))
+            out <- sapply(unique(stat), \(l) {
+                ind <- which(stat == l)
+                # gather parameters
+                p <- unique(do.call(rbind, lapply(out[ind], attr, 'parameters')))
+                # get station
+                s <- attr(out[[ind[1]]], 'stations')
+                # bind together
+                if (outclass[1] %in% c('data.table', 'dt')) {
+                    o <- rbindlist(out[ind], fill = TRUE)
+                    setattr(o, 'parameters', p)
+                    setattr(o, 'stations', s)
+                } else {
+                    o <- rbind_list(out[ind])
+                    attr(o, 'parameters') <- p
+                    attr(o, 'stations') <- s
+                }
+                # return
+                o
+            }, simplify = FALSE)
+        }
+        # list output gathered by granularity
+        , 'by-granularity' = {
+            # get granularities
+            gran <- sub('^[^/]+/', '', names(out))
+            out <- sapply(unique(gran), \(l) {
+                ind <- which(gran == l)
+                # gather stations
+                s <- unique(do.call(rbind, lapply(out[ind], attr, 'stations')))
+                # gather parameters
+                p <- unique(do.call(rbind, lapply(out[ind], attr, 'parameters')))
+                # bind together
+                if (outclass[1] %in% c('data.table', 'dt')) {
+                    o <- rbindlist(out[ind], fill = TRUE)
+                    setattr(o, 'parameters', p)
+                    setattr(o, 'stations', s)
+                } else {
+                    o <- rbind_list(out[ind])
+                    attr(o, 'parameters') <- p
+                    attr(o, 'stations') <- s
+                }
+                # return
+                o
+            }, simplify = FALSE)
+        }
+        # all output as a single data.frame/data.table
+        , 'cbind-all' = {
+            # gather stations
+            s <- unique(do.call(rbind, lapply(out, attr, 'stations')))
+            # gather parameters
+            p <- unique(do.call(rbind, lapply(out, attr, 'parameters')))
+            # bind together
+            if (outclass[1] %in% c('data.table', 'dt')) {
+                out <- rbindlist(out, fill = TRUE)
+                setattr(out, 'parameters', p)
+                setattr(out, 'stations', s)
+            } else {
+                out <- rbind_list(out)
+                attr(out, 'parameters') <- p
+                attr(out, 'stations') <- s
+            }
+        }
+    )
     # return
     out
+}
+
+# rbind a list with fill=TRUE
+rbind_list <- \(x_list, deparse.level = 1) {
+    if (length(x_list) == 1) {
+        return(x_list[[1]])
+    }
+    # remove names
+    names(x_list) <- NULL
+    # get names
+    cls_list <- lapply(x_list, \(z) setNames(sapply(z, \(x) class(x)[1]), names(z)))
+    cls_vec <- unlist(cls_list)
+    nms <- unique(names(cls_vec))
+    # extend
+    for (i in seq_along(x_list)) {
+        # get rows
+        nr <- nrow(x_list[[i]])
+        # get missing columns
+        mc <- setdiff(nms, names(cls_list[[i]]))
+        if (length(mc) > 0) {
+            # dummy df
+            dummy <- as.data.frame(sapply(mc, \(m) {
+                    out <- rep(NA, nr)
+                    mode(out) <- cls_vec[m]
+                    out
+                }, simplify = FALSE))
+            # extend
+            x_list[[i]] <- cbind(x_list[[i]], dummy)[, nms]
+        }
+    }
+    # bind together
+    do.call(rbind, c(x_list, list(deparse.level = deparse.level)))
 }
 
 ##  • get file info ====================
