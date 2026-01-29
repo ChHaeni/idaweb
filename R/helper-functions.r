@@ -350,22 +350,9 @@ fa_st <- function(x, tz) {
         time_format <- switch(sp$granularity
             , 'h' = 
             , 't' =
-            , 'd' = '%d.%m.%Y %H:%M'
-            , stop('fix current granularity in `get_data()`')
-        )
-        # fix times
-        check_manual <- check_2018 <- FALSE
-        delta_t <- switch(sp$granularity
-            , 't' = c(-10 * 60, 0)
-            , 'h' = {
-                check_2018 <- TRUE
-                c(-60 * 60, 0)
-            }
-            , 'd' = {
-                check_manual <- grepl('ogd-nime', sp$files[[1]])
-                c(0, 24 * 3600)
-            }
-            , stop('fix current granularity in `get_data()`')
+            , 'd' = 
+            , 'm' = '%d.%m.%Y %H:%M'
+            , 'y' = '%d.%m.%Y %H:%M'
         )
         # loop over files
         d_list <- lapply(sp$file_list, \(fl) {
@@ -376,19 +363,56 @@ fa_st <- function(x, tz) {
             # parse times & subset
             dat[, time := lubridate::fast_strptime(reference_timestamp, 
                 format = time_format, lt = FALSE)][, reference_timestamp := NULL]
-            if (check_2018) {
-                # fix hourly data before 2018
-                h_shift <- 40 * 60
-                dat[time < lubridate::fast_strptime('01.01.2018', format = '%d.%m.%Y',
-                    lt = FALSE, tz = 'UTC'), time := time + h_shift]
-            } else if (check_manual) {
-                # fix manual precipitation measurements
-                p_shift <- 6 * 3600
-                dat[, time := time + p_shift]
-            }
-            # add st/et
-            dat[, st := time + delta_t[1]]
-            dat[, et := time + delta_t[2]]
+            # fix times
+            switch(sp$granularity
+                , 't' = {
+                    # add st/et
+                    dat[, st := time - 10 * 60]
+                    dat[, et := time]
+                }
+                , 'h' = {
+                    # fix hourly data before 2018
+                    h_shift <- 40 * 60
+                    dat[time < lubridate::fast_strptime('01.01.2018', format = '%d.%m.%Y',
+                        lt = FALSE, tz = 'UTC'), time := time + h_shift]
+                    # add st/et
+                    dat[, st := time - 60 * 60]
+                    dat[, et := time]
+                }
+                , 'd' = {
+                    if (check_manual) {
+                        # fix manual precipitation measurements
+                        p_shift <- 6 * 3600
+                        dat[, time := time + p_shift]
+                    }
+                    # add st/et
+                    dat[, st := time]
+                    dat[, et := time + 24 * 3600]
+                }
+                , 'm' = {
+                    # add st/et
+                    dat[, st := time]
+                    dat[, et := {
+                        out <- st
+                        mout <- month(st) + 1
+                        yadd <- mout > 12
+                        mout[yadd] <- 1
+                        month(out) <- mout
+                        year(out[yadd]) <- year(out[yadd]) + 1
+                        out
+                    }]
+                }
+                , 'y' = {
+                    browser()
+                    # add st/et
+                    dat[, st := time]
+                    dat[, et := {
+                        out <- st
+                        year(out) <- year(st) + 1
+                        out
+                    }]
+                }
+            )
             # subset date/time
             dat[st >= fl$from & et <= fl$to]
         })
@@ -498,18 +522,24 @@ fa_st <- function(x, tz) {
 
 .file_names <- function(x, from, to, now, pre, yd12, cy_jan) {
     # update frequency (https://opendatadocs.meteoswiss.ch/general/download#update-frequency)
-    # historical    (meas. start until 31.12 last year): once a year        (m, d, h, t)
-    # recent        (1.1. current year until yesterday): daily at 12UTC     (m, d, h, t)
+    # wrong: historical    (meas. start until 31.12 last year): once a year        (m, d, h, t)
+    # wrong: recent        (1.1. current year until yesterday): daily at 12UTC     (m, d, h, t)
+    # historical    (meas. start until 31.12 last year): once a year        (d, h, t)
+    # recent        (1.1. current year until yesterday): daily at 12UTC     (d, h, t)
     # now           (yesterday 12UTC to now):            every 10 min       (h, t)
-    # no type                                            varies             (e.g. y)
+    # no type                                            varies             (m, y)
     file_list <- list()
     # station
     stat <- tolower(x[['station_abbr']][1])
     # granularity
     gran <- tolower(x[['parameter_granularity']][1])
-    if (gran == 'y') {
-        # -> check file names! => do they always look the same?
-        return(paste(pre, stat, 'y.csv', sep = '_'))
+    if (gran %in% c('m', 'y')) {
+        # -> check file names! => do they really always look the same?
+        file_list <- c(file_list, list(list(
+                filename = paste0(pre, '_', stat, '_', gran, '.csv'),
+                from = from,
+                to = min(to, now)
+            )))
     } else if (gran %in% c('t', 'h')) {
         if (is.na(to)) {
             to <- now
@@ -522,58 +552,58 @@ fa_st <- function(x, tz) {
                     to = min(to, now)
                 )))
         } 
-    }
-    # add previous year cut
-    cy_jan_minus_1y <- cy_jan
-    year(cy_jan_minus_1y) <- year(cy_jan) - 1
-    yd_midnight <- yd12
-    hour(yd_midnight) <- 23
-    second(yd_midnight) <- minute(yd_midnight) <- 59
-    if (from <= cy_jan && to > cy_jan) {
-        file_list <- c(file_list, list(list(
-                filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
-                from = max(from, cy_jan),
-                to = min(to, yd_midnight)
-            )))
-    } 
-    if (from < yd12 && to > cy_jan_minus_1y && month(now) <= 2) {
-        # previous year is included in current year until February (see mail support)
-        if ((l <- length(file_list)) > 0 && grepl('recent', file_list[[l]]$filename)) {
-            # update from & to, only
-            file_list[[l]]$from <- max(from, cy_jan_minus_1y) 
-            file_list[[l]]$to <- min(to, yd_midnight)
-        } else {
-            # add new entry
+        # add previous year cut
+        cy_jan_minus_1y <- cy_jan
+        year(cy_jan_minus_1y) <- year(cy_jan) - 1
+        yd_midnight <- yd12
+        hour(yd_midnight) <- 23
+        second(yd_midnight) <- minute(yd_midnight) <- 59
+        if (from <= cy_jan && to > cy_jan) {
             file_list <- c(file_list, list(list(
                     filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
-                    from = max(from, cy_jan_minus_1y),
+                    from = max(from, cy_jan),
                     to = min(to, yd_midnight)
                 )))
+        } 
+        if (from < yd12 && to > cy_jan_minus_1y && month(now) <= 2) {
+            # previous year is included in current year until February (see mail support)
+            if ((l <- length(file_list)) > 0 && grepl('recent', file_list[[l]]$filename)) {
+                # update from & to, only
+                file_list[[l]]$from <- max(from, cy_jan_minus_1y) 
+                file_list[[l]]$to <- min(to, yd_midnight)
+            } else {
+                # add new entry
+                file_list <- c(file_list, list(list(
+                        filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
+                        from = max(from, cy_jan_minus_1y),
+                        to = min(to, yd_midnight)
+                    )))
+            }
         }
-    }
-    # add all previous 10 years
-    if (from < cy_jan) {
-        if (gran %in% c('t', 'h')) {
-            from_base10 <- floor(lubridate::year(from) / 10) * 10
-            from_bases <- seq(from_base10, lubridate::year(cy_jan), by = 10)
-            file_list <- c(file_list, lapply(from_bases, \(x) {
-                list(
-                    filename = paste(pre, stat, gran, 
-                        paste0('historical_', x, '-', x + 9, '.csv'), sep = '_'),
-                    from = max(from, lubridate::parse_date_time2(sprintf('%s-01-01', x), 
-                            orders = '%Y-%m-%d', exact = TRUE)),
-                    to = min(to, cy_jan, lubridate::parse_date_time2(
-                            sprintf('%s-01-01', x + 10), orders = '%Y-%m-%d', exact = TRUE))
+        # add all previous 10 years
+        if (from < cy_jan) {
+            if (gran %in% c('t', 'h')) {
+                from_base10 <- floor(lubridate::year(from) / 10) * 10
+                from_bases <- seq(from_base10, lubridate::year(cy_jan), by = 10)
+                file_list <- c(file_list, lapply(from_bases, \(x) {
+                    list(
+                        filename = paste(pre, stat, gran, 
+                            paste0('historical_', x, '-', x + 9, '.csv'), sep = '_'),
+                        from = max(from, lubridate::parse_date_time2(sprintf('%s-01-01', x), 
+                                orders = '%Y-%m-%d', exact = TRUE)),
+                        to = min(to, cy_jan, lubridate::parse_date_time2(
+                                sprintf('%s-01-01', x + 10), orders = '%Y-%m-%d', exact = TRUE))
+                    )
+                }))
+            } else {
+                file_list <- c(file_list,
+                    list(list(
+                        filename = paste(pre, stat, gran, 'historical.csv', sep = '_'),
+                        from = from,
+                        to = min(to, cy_jan)
+                    ))
                 )
-            }))
-        } else {
-            file_list <- c(file_list,
-                list(list(
-                    filename = paste(pre, stat, gran, 'historical.csv', sep = '_'),
-                    from = from,
-                    to = min(to, cy_jan)
-                ))
-            )
+            }
         }
     }
     list(
