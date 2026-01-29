@@ -347,13 +347,14 @@ fa_st <- function(x, tz) {
     # loop over splits
     out <- lapply(x[-1], \(sp) {
         # time format
-        time_format <- switch(sp$granularity
-            , 'h' = 
-            , 't' =
-            , 'd' = 
-            , 'm' = '%d.%m.%Y %H:%M'
-            , 'y' = '%d.%m.%Y %H:%M'
-        )
+        time_format <- '%d.%m.%Y %H:%M'
+        # time_format <- switch(sp$granularity
+        #     , 'h' = 
+        #     , 't' =
+        #     , 'd' = 
+        #     , 'm' = 
+        #     , 'y' = '%d.%m.%Y %H:%M'
+        # )
         # loop over files
         d_list <- lapply(sp$file_list, \(fl) {
             suppressWarnings(
@@ -371,6 +372,7 @@ fa_st <- function(x, tz) {
                     dat[, et := time]
                 }
                 , 'h' = {
+                    if (year(fl$from) < 2018) cat('Fix SYNOP time range before 2018...\n')
                     # fix hourly data before 2018
                     h_shift <- 40 * 60
                     dat[time < lubridate::fast_strptime('01.01.2018', format = '%d.%m.%Y',
@@ -378,6 +380,15 @@ fa_st <- function(x, tz) {
                     # add st/et
                     dat[, st := time - 60 * 60]
                     dat[, et := time]
+                    # fix overlapping 2017->2018
+                    if (year(fl$from) < 2018 && year(fl$to) > 2017) {
+                        ind <- dat[, which(as.numeric(diff(st), units = 'secs') < 3600)]
+                        if (length(ind) > 0) {
+                            dat[ind + 0:1, st := {
+                                c(st[1], et[1])
+                            }]
+                        }
+                    }
                 }
                 , 'd' = {
                     if (check_manual) {
@@ -415,7 +426,11 @@ fa_st <- function(x, tz) {
             # subset date/time
             dat[et > fl$from & st < fl$to]
         })
+        # bind together
         dout <- rbindlist(d_list, fill = TRUE)
+        # order by et
+        dout <- dout[order(et)]
+        # check timestamp
         if (single_timestamp) {
             # remove st/et
             dout[, c('st', 'et') := NULL]
