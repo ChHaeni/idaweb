@@ -26,10 +26,12 @@ col
 # meta_parameters <- idaweb:::get_metadata(col, 'par', cache_dir = path_cache)
 # xx <- idaweb:::get_metadata(col[1])
 
-meta_datainv <- get_metadata(col[9], 'data', cache_dir = path_cache)
-meta_stations <- get_metadata(col[9], 'stat', cache_dir = path_cache)
-meta_parameters <- get_metadata(col[9], 'par', cache_dir = path_cache)
-md <- get_metadata(col[9], cache_dir = path_cache)
+# # works as expected
+# meta_datainv <- idaweb:::get_metadata(col[1], 'data', cache_dir = path_cache)
+# meta_stations <- idaweb:::get_metadata(col[1], 'stat', cache_dir = path_cache)
+# meta_parameters <- idaweb:::get_metadata(col[1], 'par', cache_dir = path_cache)
+# md <- idaweb:::get_metadata(col[1], cache_dir = path_cache)
+# meta_parameters <- idaweb:::get_metadata(col[[1]], 'par', cache_dir = path_cache)
 
 dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[7])
 dt <- search_by_datetime('01.09.2024 to 31.12.2025', meta_data = dl)
