@@ -140,6 +140,11 @@ search_by_location <- function(x, y, z, abbr, name, canton,
     xv <- check_xy_arg(x)
     # parse y
     yv <- check_xy_arg(y)
+    # fix WGS84
+    xy <- fix_wgs84(xv, yv)
+    # reassign back
+    xv <- lapply(xy, '[[', 1)
+    yv <- lapply(xy, '[[', 2)
     # parse z
     zv <- check_z_arg(z)
     # select datainventory/station/parameters

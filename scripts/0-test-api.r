@@ -99,7 +99,9 @@ if (!dir.exists(path_cache)) {
 
 # TODO (maybe): add function to switch between different structures
 
-
+# using CH-coords
+# dl <- search_by_location('620..650', '190..210', meta_data = metadata[1])
+dl <- search_by_location('600..602', '203..205', meta_data = metadata[1])
 
 ## old tests ----------------------------------------
 

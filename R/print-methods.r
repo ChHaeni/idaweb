@@ -142,8 +142,18 @@ print.met_metadata <- function(x, ...) {
     if (!is.null(slo)) {
         for (slnm in names(slo)) {
             if (!is.null(slo[[slnm]])) {
-                cat('   *', slnm, ':', sapply(slo[[slnm]], paste, 
-                    collapse = '..'), '\n')
+                if (slnm %in% c('x', 'y')) {
+                    # FIXME: fix lists of length > 1
+                    sloxy <- slo[[slnm]][[1]]
+                    sloxy <- sub('^0', ' ', sprintf('%06.3f', unique(sloxy)))
+                    if (length(sloxy) == 2) {
+                        sloxy <- paste(sloxy, collapse = ' .. ')
+                    }
+                    cat('   *', slnm, ':', sloxy, '\n')
+                } else {
+                    cat('   *', slnm, ':', sapply(slo[[slnm]], paste, 
+                        collapse = '..'), '\n')
+                }
             }
         }
     }

@@ -86,16 +86,16 @@ check_xy_arg <- function(xy) {
     if (missing(xy) || is.null(xy)) {
         return(NULL)
     }
-    xy_nm <- deparse(substitute(xy))
     if (is.list(xy) && all(sapply(xy, is.numeric)) &&
         unique(lengths(xy)) == 2L) {
-        return(xy)
-    }
-    if (is.numeric(xy)) {
+        # ok to test
+        xyl <- xy
+    } else if (is.numeric(xy)) {
         if (length(xy) != 2) {
-            stop('if argument', xy_nm, 'is numeric, length must be 2 (use -Inf/Inf for open limits)')
+            xy_nm <- deparse(substitute(xy))
+            stop('if argument', xy_nm, 'is numeric, its length must be 2')
         }
-        v_out <- list(xy)
+        xyl <- list(xy)
     } else {
         # define valid separators
         seps <- c('[.][.]', 'to', '/', '//', '-')
@@ -109,31 +109,69 @@ check_xy_arg <- function(xy) {
         }
         # check separators
         xyl <- strsplit(xy, split = paste(seps, collapse = '|'))
-        # get limits
-        switch(xy_nm
-            , x = {
-                wgs_lims <- c(4, 12)
-            }
-            , y = {
-                wgs_lims <- c(42, 50)
-            }
-        )
-        # fix coord values
-        v_out <- lapply(xyl, \(z) {
-            v <- as.numeric(z)
-            if (all(v > wgs_lims[1] & v < wgs_lims[2])) {
-                # lon
-                # v is ok
-            } else {
-                stop('Fix ch coordinates')
-                # 200/200000, 1200/1200000
-            }
-            v
-        })
     }
+    # fix coord values
+    v_out <- lapply(xyl, \(z) {
+        v <- as.numeric(z)
+        # lon 4 to 12
+        if (all(v >= 4 & v <= 12 | is.infinite(v))) {
+            # longitude ok
+            return(v)
+        } else if (all(v >= 42 & v <= 50 | is.infinite(v))) {
+            # latitude ok
+            return(v)
+        }
+        # check swiss coords
+        if (all(v >= 60 & v <= 310)) {
+            # 60 - 310 -> y lv03
+            v <- v * 1e3
+        } else if (all(v >= 460 & v <= 860)) {
+            # 460 - 860 -> x lv03
+            v <- v * 1e3
+        } else if (all(v >= 1060 & v <= 1310)) {
+            # 1060 - 1310 -> y lv95
+            v <- v * 1e3
+        } else if (all(v >= 2460 & v <= 2860)) {
+            # 2460 - 2860 -> x lv95
+            v <- v * 1e3
+        } 
+        # needs conversion to WGS84
+        if (all(v >= 60000 & v <= 310000) || all(v >= 460000 & v <= 860000)) {
+            # lv03 ok
+        } else if (all(v >= 1060000 & v <= 1310000) || all(v >= 2460000 & v <= 2860000)) {
+            # lv95 ok
+        } else {
+            stop('provided coordinates are not in a valid range')
+        }
+        # capture non-Inf at end & throw error
+        v
+    })
     # return list of values
     v_out
 }
+
+# transform ch1903 to wgs84
+fix_wgs84 <- function(xv, yv) {
+    if (!requireNamespace('sf', quietly = TRUE)) {
+        stop('package "sf" is required to transform CH-coordinates - run install.packages("sf") to install')
+    }
+    mapply(\(x, y) {
+        if (all(x < 1e6, y < 2e6)) {
+            # lv03
+            crs_from <- 'EPSG:21781'
+        } else if (all(x > 1e6, y > 2e6)) {
+            # lv95
+            crs_from <- 'EPSG:2056'
+        } else {
+            stop('Mixed x/y coordinate system cannot be handled')
+        }
+        # transform
+        out <- sf::sf_project(crs_from, 'EPSG:4326', cbind(x, y))
+        # return list of x/y
+        list(x = out[, 1], y = out[, 2])
+    }, xv, yv, SIMPLIFY = FALSE)
+}
+
 
 check_z_arg <- function(z) {
     if (missing(z) || is.null(z)) {
