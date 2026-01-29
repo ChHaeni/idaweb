@@ -5,8 +5,7 @@ print.met_collections <- function(x, ...) {
     titles <- sapply(attr(x, 'collections'), '[[', 'title')
     mt <- max(nchar(titles)) + grepl('[^a-zA-Z0-9:)( -]', titles) * 2
     cat('~~~~~~~~~~~~~~~~~~~~~~\n')
-    cat('Open Data - MeteoSwiss\n')
-    cat('(Ground-based measurements)\n')
+    cat('MeteoSwiss Open Data (Ground-based measurements)\n')
     cat(nl <- length(x), 'collections available:\n')
     cat(paste(rep('-', nchar(as.character(nl))), collapse = ''),
         '-----------------------\n', sep = '')
