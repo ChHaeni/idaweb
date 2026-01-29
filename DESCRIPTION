@@ -7,6 +7,6 @@ Author: Christoph Haeni
 Maintainer: Christoph Haeni <christoph.haeni@bfh.ch>
 Description: This package simplifies searching for and downloading ground-based measurements provided by MeteoSwiss through the Open Data API
 License: GPL-2
-Depends: data.table
+Depends: data.table, lubridate
 Imports: httr
 LazyData: true
