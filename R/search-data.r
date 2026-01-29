@@ -295,6 +295,8 @@ search_by_parameter <- function(shortname, unit, group, description,
             search_parameters <- c(search_parameters, list(group = group))
         }
         if (!missing(granularity)) {
+            # ignore case
+            granularity <- toupper(granularity)
             # search by granularity (vector)
             ind <- sub_paras$parameter_granularity %in% granularity
             sub_paras <- sub_paras[ind, ]
