@@ -339,6 +339,9 @@ fa_st <- function(x, tz) {
     output = c('data.frame', 'data.table', 'ibts')) {
     # check conversion
     if (output[1] == 'ibts') {
+        if (!requireNamespace('ibts', quietly = TRUE)) {
+            stop('package ibts is missing - install package from https://github.com/ChHaeni/ibts')
+        }
         single_timestamp <- FALSE
     }
     # loop over splits
@@ -398,13 +401,10 @@ fa_st <- function(x, tz) {
         dout[]
     })
     # return list
-    if (output[1] != 'data.table') {
-        as_fun <- try(get(paste0('as.', output[1]), mode = 'function'))
-        if (inherits(as_fun, 'try-error')) {
-            warning('argument "output" cannot be interpreted => falling back to data.frame!')
-            as_fun <- as.data.frame
-        }
-        out <- lapply(out, as_fun)
+    if (output[1] == 'data.frame') {
+        out <- lapply(out, as.data.frame)
+    } else if (output[1] == 'ibts') {
+        out <- lapply(out, ibts::as.ibts)
     }
     out
 }
