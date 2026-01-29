@@ -72,7 +72,7 @@ datainventory <- function(meta_data) {
 
 # get meta data
 get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters'),
-    cache_dir = tempdir()) {
+    cache_dir = NULL, force_cache = FALSE) {
     type <- match.arg(type)
     if (length(id) == 1L) {
         # check supported id
@@ -100,12 +100,13 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                     # TODO: add message about github issue (only first time if local
                     #           file does not exist yet)
                     # cat()
-                    warning(file_name, ' has recent changes:',
-                        'metadata.rda in package needs updating!')
+                    warning(file_name, ' has recent changes: ',
+                        'metadata.rda in package needs updating!', immediate. = TRUE)
                     # ?
                 }
                 # download file
-                local_file <- .dl_data(file_url, file_checksum, cache_dir = cache_dir)
+                cat('-> Fetching new data from MeteoSwiss - ')
+                local_file <- .dl_data(file_url, cache_dir, force_cache, file_checksum)
                 out <- read.table(local_file, sep = ';', header = TRUE, fill = TRUE,
                         fileEncoding = 'Windows-1252', comment.char = '', quote = '"'
                     )
@@ -132,11 +133,13 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
             nm <- sub('.+_meta_(.+)[.]csv', '\\1', file_name)
             return(idaweb::metadata[[id]][[nm]])
         } else {
+            warning('argument "id" is not recognized - returning NULL', immediate. = TRUE)
             return(invisible(NULL))
         }
     } else {
         # get data
-        out <- lapply(id, get_metadata, type = type, cache_dir = cache_dir)
+        out <- lapply(id, get_metadata, type = type, cache_dir = cache_dir, 
+            force_cache = force_cache)
         names(out) <- id
         # remove invalid
         return(out[!sapply(out, is.null)])

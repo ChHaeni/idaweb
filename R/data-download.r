@@ -10,8 +10,7 @@ get_data <- function(meta_data, cache_dir = tempdir(), force_cache = FALSE,
     }
     if (inherits(meta_data, 'file_list')) {
         # get files
-        meta_data <- .get_files(meta_data, cache_dir = cache_dir, 
-            force_cache = force_cache)
+        meta_data <- .get_files(meta_data, cache_dir, force_cache = force_cache)
     }
     if (inherits(meta_data, 'dl_files')) {
         # get data from files

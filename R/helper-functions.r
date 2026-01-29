@@ -411,7 +411,7 @@ fa_st <- function(x, tz) {
 
 ##  • get file info ====================
 
-.get_files <- function(x, cache_dir = tempdir(), force_cache = FALSE) {
+.get_files <- function(x, cache_dir = NULL, force_cache = FALSE) {
     # check if more than one collection
     # also check class
     # get collection
@@ -431,8 +431,8 @@ fa_st <- function(x, tz) {
                     # what if missing?
                     if (fl$filename %in% names(info)) {
                         .dl_data(met_url(cl, '/', l$station, '/', fl$filename), 
-                            checksum = info[[fl$filename]][['file:checksum']], 
-                            cache_dir = cache_dir, force_cache = force_cache)
+                            cache_dir, force_cache = force_cache,
+                            checksum = info[[fl$filename]][['file:checksum']]) 
                     } else {
                         warning('file "', fl$filename, '" cannot be downloaded')
                         NULL
@@ -568,8 +568,7 @@ fa_st <- function(x, tz) {
 
 # helper function to download data
 # and get path to local file
-.dl_data <- function(url, checksum = NULL, cache_dir = tempdir(), 
-    force_cache = FALSE) {
+.dl_data <- function(url, cache_dir = NULL, force_cache = FALSE, checksum = NULL) {
     # get data name
     data_name <- basename(url)
     # check if data is already available locally
@@ -580,6 +579,8 @@ fa_st <- function(x, tz) {
     }
     # check if cache_dir matches
     if (is.null(local_file)) {
+        # check cache_dir
+        if (is.null(cache_dir)) cache_dir <- tempdir()
         # check if directory exists
         if (!file.exists(cache_dir)) {
             stop('directory "', cache_dir, '" does not exist!')
@@ -609,10 +610,11 @@ fa_st <- function(x, tz) {
         }
         # add path to options
         options(setNames(list(local_file), data_name))
-    } else if (!grepl(cache_dir, local_file, fixed = TRUE)) {
+    } else if (!is.null(cache_dir) && !grepl(cache_dir, local_file, fixed = TRUE)) {
         warning('file: "', data_name, '" has already been downloaded to "', 
             dirname(local_file), '".\n -> ignoring cache_dir argument.')
     }
+    cat('data available at', local_file, '\n')
     # return path
     invisible(local_file)
 }
