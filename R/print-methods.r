@@ -53,15 +53,14 @@ print.met_parameters <- function(x, ...) {
 
 print.met_metadata <- function(x, ...) {
     # shorten parameter groups
-    groups <- paste(ug <- unique(x[['parameters']][['parameter_group_en']]), collapse = ',')
+    groups <- paste(ug <- unique(x[['parameters']][['parameter_group_en']]), collapse = ';')
     if (nchar(groups) > 40) {
-        groups <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', groups)
+        groups <- sub('^(.{10,20}[;]).+(;.{10,20})$', '\\1...\\2', groups)
     }
     # shorten stations
-    # stations <- paste(unique(x[['stations']][['station_abbr']]), collapse = ',')
-    stations <- paste(us <- unique(x[['stations']][['station_name']]), collapse = ',')
+    stations <- paste(us <- unique(x[['stations']][['station_name']]), collapse = ';')
     if (nchar(stations) > 40) {
-        stations <- sub('^(.{10,20}[,]).+(,.{10,20})$', '\\1...\\2', stations)
+        stations <- sub('^(.{10,20}[;]).+(;.{10,20})$', '\\1...\\2', stations)
     }
     # fix till
     data_till <- attr(x, 'data_till')
