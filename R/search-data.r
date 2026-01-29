@@ -136,12 +136,8 @@ search_by_location <- function(x, y, z, abbr, name, canton,
     # only attach sf if really necessary
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
-    # parse x
-    xv <- check_xy_arg(x)
-    # parse y
-    yv <- check_xy_arg(y)
-    # fix WGS84
-    xy <- fix_wgs84(xv, yv)
+    # parse x & y
+    xy <- fix_wgs84(x, y)
     # reassign back
     xv <- lapply(xy, '[[', 1)
     yv <- lapply(xy, '[[', 2)

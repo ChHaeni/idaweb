@@ -151,12 +151,20 @@ check_xy_arg <- function(xy) {
 }
 
 # transform ch1903 to wgs84
-fix_wgs84 <- function(xv, yv) {
+fix_wgs84 <- function(x, y) {
     if (!requireNamespace('sf', quietly = TRUE)) {
         stop('package "sf" is required to transform CH-coordinates - run install.packages("sf") to install')
     }
+    # parse x
+    xv <- check_xy_arg(x)
+    # parse y
+    yv <- check_xy_arg(y)
+    # fix wgs84
     mapply(\(x, y) {
-        if (all(x < 1e6, y < 2e6)) {
+        if (all(y < 50, x < 12)) {
+            # wgs84 ok
+            return(list(x = x, y = y))
+        } else if (all(x < 1e6, y < 2e6)) {
             # lv03
             crs_from <- 'EPSG:21781'
         } else if (all(x > 1e6, y > 2e6)) {
