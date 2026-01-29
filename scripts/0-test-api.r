@@ -35,8 +35,9 @@ if (!dir.exists(path_cache)) {
 
 ## search by ----------------------------------------
 
-dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[1])
-dt <- search_by_datetime('01.09.2024 to 31.12.2025', meta_data = dl)
+# # works as expected
+# dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[1])
+# dt <- search_by_datetime('01.09.2024 to 31.12.2025', meta_data = dl)
 # p <- parameters(dt[[1]])
 # p2 <- parameters(dt[[1]], TRUE)
 # s <- stations(dt[[1]])
@@ -44,22 +45,35 @@ dt <- search_by_datetime('01.09.2024 to 31.12.2025', meta_data = dl)
 # stations(dt[[1]], TRUE)[, station_name]
 # datainventory(dt[[1]])
 # datainventory(dt[[1]], TRUE)
-parameters(dt[[1]], TRUE)[parameter_granularity == 'H']
-parameters(dt[[1]], TRUE)[parameter_granularity == 'H' & parameter_group_en == 'Radiation']
-parameters(dt[[1]], TRUE)[parameter_granularity == 'H' & parameter_group_en == 'Temperature']
-dp <- search_by_parameter(meta_data = dt, granularity = 'H', 
-    shortname = c('gre000h0', 'tre200h0'))
+# parameters(dt[[1]], TRUE)[parameter_granularity == 'H']
+# parameters(dt[[1]], TRUE)[parameter_granularity == 'H' & parameter_group_en == 'Radiation']
+# parameters(dt[[1]], TRUE)[parameter_granularity == 'H' & parameter_group_en == 'Temperature']
+# dp <- search_by_parameter(meta_data = dt, granularity = 'H', 
+#     shortname = c('gre000h0', 'tre200h0'))
 
-xx <- get_filenames(dp[[1]])
-yy <- get_files(xx)
-dat <- get_data(yy)
-fwrite(dat[[1]], '~/tmp/alex/zollikofen-temp-grad.csv')
 
-metadata[[1]][[1]]
-metadata[[1]][[2]]
-metadata[[1]][[3]]
-metadata[[1]][[4]]
-metadata[[1]]
+##  • fix granularity == d,m,y ====================
+
+# # works as expected
+# dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[1])
+# dt <- search_by_datetime('01.09.2015 to 31.12.2025', meta_data = dl)
+# # parameters(dt[[1]], TRUE)[parameter_granularity == 'D' & parameter_group_en == 'Temperature']
+# # # fixed ignore case
+# # dd <- search_by_parameter(meta_data = dt, granularity = 'd', group = 'temp')
+# dd <- search_by_parameter(meta_data = dt, granularity = 'D', group = 'temp')
+# # get data
+# xx <- get_data(dd, output = 'ibts', cache_dir = path_cache)
+
+# # check manual precip data -> ok
+# dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[4])
+# dt <- search_by_datetime('01.09.2015 to 31.12.2025', meta_data = dl)
+# dd <- search_by_parameter(meta_data = dt, granularity = 'D')
+# xx <- get_data(dd, output = 'ibts', cache_dir = path_cache)
+
+# TODO: test hourly data from 2015 to 2025
+
+## old tests ----------------------------------------
+
 
 ##  • search by datetime ====================
 

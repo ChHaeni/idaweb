@@ -349,16 +349,21 @@ fa_st <- function(x, tz) {
         # time format
         time_format <- switch(sp$granularity
             , 'h' = 
-            , 't' = '%d.%m.%Y %H:%M'
+            , 't' =
+            , 'd' = '%d.%m.%Y %H:%M'
             , stop('fix current granularity in `get_data()`')
         )
         # fix times
-        check_2018 <- FALSE
+        check_manual <- check_2018 <- FALSE
         delta_t <- switch(sp$granularity
             , 't' = c(-10 * 60, 0)
             , 'h' = {
                 check_2018 <- TRUE
                 c(-60 * 60, 0)
+            }
+            , 'd' = {
+                check_manual <- grepl('ogd-nime', sp$files[[1]])
+                c(0, 24 * 3600)
             }
             , stop('fix current granularity in `get_data()`')
         )
@@ -378,11 +383,12 @@ fa_st <- function(x, tz) {
                     lt = FALSE, tz = 'UTC'), time := time + h_shift]
             } else if (check_manual) {
                 # fix manual precipitation measurements
-                browser()
+                p_shift <- 6 * 3600
+                dat[, time := time + p_shift]
             }
             # add st/et
-            dat[, et := time + delta_t[2]]
             dat[, st := time + delta_t[1]]
+            dat[, et := time + delta_t[2]]
             # subset date/time
             dat[st >= fl$from & et <= fl$to]
         })
@@ -437,6 +443,7 @@ fa_st <- function(x, tz) {
                             cache_dir, force_cache = force_cache,
                             checksum = info[[fl$filename]][['file:checksum']]) 
                     } else {
+                        browser()
                         warning('file "', fl$filename, '" cannot be downloaded')
                         NULL
                     }
@@ -546,18 +553,28 @@ fa_st <- function(x, tz) {
     }
     # add all previous 10 years
     if (from < cy_jan) {
-        from_base10 <- floor(lubridate::year(from) / 10) * 10
-        from_bases <- seq(from_base10, lubridate::year(cy_jan), by = 10)
-        file_list <- c(file_list, lapply(from_bases, \(x) {
-            list(
-                filename = paste(pre, stat, gran, 
-                    paste0('historical_', x, '-', x + 9, '.csv'), sep = '_'),
-                from = max(from, lubridate::parse_date_time2(sprintf('%s-01-01', x), 
-                        orders = '%Y-%m-%d', exact = TRUE)),
-                to = min(to, cy_jan, lubridate::parse_date_time2(
-                        sprintf('%s-01-01', x + 10), orders = '%Y-%m-%d', exact = TRUE))
+        if (gran %in% c('t', 'h')) {
+            from_base10 <- floor(lubridate::year(from) / 10) * 10
+            from_bases <- seq(from_base10, lubridate::year(cy_jan), by = 10)
+            file_list <- c(file_list, lapply(from_bases, \(x) {
+                list(
+                    filename = paste(pre, stat, gran, 
+                        paste0('historical_', x, '-', x + 9, '.csv'), sep = '_'),
+                    from = max(from, lubridate::parse_date_time2(sprintf('%s-01-01', x), 
+                            orders = '%Y-%m-%d', exact = TRUE)),
+                    to = min(to, cy_jan, lubridate::parse_date_time2(
+                            sprintf('%s-01-01', x + 10), orders = '%Y-%m-%d', exact = TRUE))
+                )
+            }))
+        } else {
+            file_list <- c(file_list,
+                list(list(
+                    filename = paste(pre, stat, gran, 'historical.csv', sep = '_'),
+                    from = from,
+                    to = min(to, cy_jan)
+                ))
             )
-        }))
+        }
     }
     list(
         station = stat,
