@@ -113,6 +113,10 @@ check_xy_arg <- function(xy) {
     # fix coord values
     v_out <- lapply(xyl, \(z) {
         v <- as.numeric(z)
+        # check order
+        if (v[2] < v[1]) {
+            stop('Coordinate range inverted?')
+        }
         # lon 4 to 12
         if (all(v >= 4 & v <= 12 | is.infinite(v))) {
             # longitude ok
