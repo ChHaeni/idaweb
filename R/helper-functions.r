@@ -371,15 +371,18 @@ fa_st <- function(x, tz) {
             # parse times & subset
             dat[, time := lubridate::fast_strptime(reference_timestamp, 
                 format = time_format, lt = FALSE)][, reference_timestamp := NULL]
-            # add st/et
-            dat[, et := time + delta_t[2]]
-            dat[, st := time + delta_t[1]]
             if (check_2018) {
                 # fix hourly data before 2018
                 h_shift <- 40 * 60
-                dat[et < lubridate::fast_strptime('01.01.2018', format = '%d.%m.%Y',
-                    lt = FALSE, tz = 'UTC'), ':='(st = st + h_shift, et = et + h_shift)]
+                dat[time < lubridate::fast_strptime('01.01.2018', format = '%d.%m.%Y',
+                    lt = FALSE, tz = 'UTC'), time := time + h_shift]
+            } else if (check_manual) {
+                # fix manual precipitation measurements
+                browser()
             }
+            # add st/et
+            dat[, et := time + delta_t[2]]
+            dat[, st := time + delta_t[1]]
             # subset date/time
             dat[st >= fl$from & et <= fl$to]
         })
