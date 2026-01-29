@@ -414,7 +414,7 @@ fa_st <- function(x, tz) {
                 }
             )
             # subset date/time
-            dat[st >= fl$from & et <= fl$to]
+            dat[et > fl$from & st < fl$to]
         })
         dout <- rbindlist(d_list, fill = TRUE)
         if (single_timestamp) {
