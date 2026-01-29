@@ -1,2 +1,2 @@
-# ignore cache directory
-cached
+# ignore tests directory
+tests
