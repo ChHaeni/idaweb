@@ -33,20 +33,24 @@ collections <- function(set_name = NULL) {
 parameters <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
         out <- meta_data$parameters
-        if (!is.null(cols)) {
-            out <- out[, cols]
-            if (uniq) {
-                out <- unique(out)
-            }
-        }
-        if (as_dt) {
-            out <- as.data.table(out)
-        }
-    } else if (is.list(meta_data)) {
-        out <- sapply(meta_data, parameters, as_dt = as_dt, cols = cols, uniq = uniq, 
-            simplify = FALSE)
+    } else if (class(meta_data)[1] == 'list') {
+        return(
+            sapply(meta_data, parameters, as_dt = as_dt, cols = cols, uniq = uniq, 
+                simplify = FALSE)
+        )
     } else {
-        stop('argument "meta_data" is not valid!')
+        out <- attr(meta_data, 'parameters')
+    }
+    # check cols
+    if (!is.null(cols)) {
+        out <- out[, cols]
+        if (uniq) {
+            out <- unique(out)
+        }
+    }
+    # check as data.table
+    if (as_dt) {
+        out <- as.data.table(out)
     }
     out
 }
@@ -54,20 +58,24 @@ parameters <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(co
 stations <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
         out <- meta_data$stations
-        if (!is.null(cols)) {
-            out <- out[, cols]
-            if (uniq) {
-                out <- unique(out)
-            }
-        }
-        if (as_dt) {
-            out <- as.data.table(out)
-        }
-    } else if (is.list(meta_data)) {
-        out <- sapply(meta_data, stations, as_dt = as_dt, cols = cols, uniq = uniq, 
-            simplify = FALSE)
+    } else if (class(meta_data)[1] == 'list') {
+        return(
+            sapply(meta_data, stations, as_dt = as_dt, cols = cols, uniq = uniq, 
+                simplify = FALSE)
+        )
     } else {
-        stop('argument "meta_data" is not valid!')
+        out <- attr(meta_data, 'stations')
+    }
+    # check cols
+    if (!is.null(cols)) {
+        out <- out[, cols]
+        if (uniq) {
+            out <- unique(out)
+        }
+    }
+    # check as data.table
+    if (as_dt) {
+        out <- as.data.table(out)
     }
     out
 }

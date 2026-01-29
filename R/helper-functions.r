@@ -335,15 +335,20 @@ fa_st <- function(x, tz) {
 # m: The sum, mean or max/min of the whole month from 1st to last day of month (ReferenceTS 1.6.2023 = 1.6.2023 00:10 UTC to 30.6.2023 24:00 UTC)
 # y: The sum, mean or max/min of the whole year (ReferenceTS 1.1.2023 = 1.1.2023 00:10 UTC to 31.12.2023 24:00 UTC)
 
-.get_data <- function(x, single_timestamp = TRUE, 
-    output = c('data.frame', 'data.table', 'ibts')) {
+.get_data <- function(x, single_timestamp = TRUE, as_list = FALSE,
+    outclass = c('data.table', 'data.frame', 'ibts')) {
     # check conversion
-    if (output[1] == 'ibts') {
+    if (outclass[1] == 'ibts') {
         if (!requireNamespace('ibts', quietly = TRUE)) {
             stop('package ibts is missing - install package from https://github.com/ChHaeni/ibts')
         }
+        as_list <- TRUE
         single_timestamp <- FALSE
     }
+    # get metadata
+    pars <- parameters(metadata[[x[[1]]]])
+    stats <- stations(metadata[[x[[1]]]])
+    inv <- datainventory(metadata[[x[[1]]]])
     # loop over splits
     out <- lapply(x[-1], \(sp) {
         # time format
@@ -361,6 +366,8 @@ fa_st <- function(x, tz) {
                 dat <- fread(sp$files[[fl$filename]], select = c('station_abbr', 
                         'reference_timestamp', sp$parameters))
             )
+            # add granularity
+            dat[, granularity := toupper(sp$granularity)]
             # parse times & subset
             dat[, time := lubridate::fast_strptime(reference_timestamp, 
                 format = time_format, lt = FALSE)][, reference_timestamp := NULL]
@@ -425,7 +432,7 @@ fa_st <- function(x, tz) {
             )
             # subset date/time
             dat[et > fl$from & st < fl$to]
-        })
+        }) # end of inner lapply
         # bind together
         dout <- rbindlist(d_list, fill = TRUE)
         # order by et
@@ -444,15 +451,26 @@ fa_st <- function(x, tz) {
             setcolorder(dout, c('st', 'et'))
             setorder(dout, 'et')
         }
-        # return
-        dout[]
-    })
-    # return list
-    if (output[1] == 'data.frame') {
-        out <- lapply(out, as.data.frame)
-    } else if (output[1] == 'ibts') {
-        out <- lapply(out, ibts::as.ibts)
+        # return with correct class
+        if (outclass[1] == 'data.frame') {
+            dout <- as.data.frame(dout)
+        } else if (outclass[1] == 'ibts') {
+            dout <- ibts::as.ibts(dout)
+        } else {
+            setattr(dout, 'parameters', pars[pars$parameter_shortname %in% sp$parameters,])
+            setattr(dout, 'stations', stats[stats$station_abbr == toupper(sp$station),])
+            return(dout[])
+        }
+        attr(dout, 'parameters') <- pars[pars$parameter_shortname %in% sp$parameters,]
+        attr(dout, 'stations') <- stats[stats$station_abbr == toupper(sp$station),]
+        dout
+    }) # end of outer lapply
+    # bind together and 
+    if (!as_list) {
+        # IDEA: outstruc = c('all-split', 'by-station', 'by-granularity', 'unite')
+        browser()
     }
+    # return
     out
 }
 

@@ -80,11 +80,15 @@ if (!dir.exists(path_cache)) {
 # dd <- search_by_parameter(meta_data = dt, granularity = 'Y')
 # xx <- get_data(dd, output = 'ibts', cache_dir = path_cache)
 
-# # test hourly data from 2015 to 2025 -> ok
-# dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[1])
-# dt <- search_by_datetime('01.09.2015 to 31.12.2025', meta_data = dl)
-# dd <- search_by_parameter(meta_data = dt, granularity = 'h')
-# xx <- get_data(dd, output = 'ibts', cache_dir = path_cache)
+# test hourly data from 2015 to 2025 -> ok
+dl <- search_by_location('7.4..7.49', '46.9..47.2', meta_data = metadata[1])
+dt <- search_by_datetime('01.09.2015 to 31.12.2025', meta_data = dl)
+dd <- search_by_parameter(meta_data = dt, granularity = c('h', 'm'))
+xx <- get_data(dd, output = 'ibts', cache_dir = path_cache)
+
+parameters(xx)
+stations(xx)
+
 
 ## old tests ----------------------------------------
 
