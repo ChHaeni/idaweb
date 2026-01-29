@@ -403,7 +403,6 @@ fa_st <- function(x, tz) {
                     }]
                 }
                 , 'y' = {
-                    browser()
                     # add st/et
                     dat[, st := time]
                     dat[, et := {
