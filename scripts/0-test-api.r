@@ -1,42 +1,35 @@
 
 ## header ----------------------------------------
 
-# set wd
-setwd('~/repos/3_Scripts/8_meteoswiss')
-
-# source functions
-source('scripts/idaweb-functions.r')
-
-# load meta data
-load('data/metadata.rda')
+library(idaweb)
 
 # set cache directory
-path_cache <- 'cached'
+path_cache <- 'tests/cached'
 if (!dir.exists(path_cache)) {
-    dir.create(path_cache, recursive = TRUE)
+    stop('path "', path_cache, '" is not accessible!')
 }
 
 ## testing ----------------------------------------
 
 ##  • collections & meta data ====================
 
-# check supported collections from MeteoSwiss
-sup <- supported_collections()
-sup
+# fetch info for  available collections
+col <- collections()
+col
 
 # get meta data
 # args(get_metadata)
 
-# -> FAILS!!!!
-meta_datainv <- get_metadata(sup, 'data', cache_dir = path_cache)
-meta_stations <- get_metadata(sup, 'stat', cache_dir = path_cache)
-meta_parameters <- get_metadata(sup, 'par', cache_dir = path_cache)
-get_metadata(sup[1])
+# # works as expected
+# meta_datainv <- idaweb:::get_metadata(col, 'data', cache_dir = path_cache)
+# meta_stations <- idaweb:::get_metadata(col, 'stat', cache_dir = path_cache)
+# meta_parameters <- idaweb:::get_metadata(col, 'par', cache_dir = path_cache)
+# xx <- idaweb:::get_metadata(col[1])
 
-meta_datainv <- get_metadata(sup[9], 'data', cache_dir = path_cache)
-meta_stations <- get_metadata(sup[9], 'stat', cache_dir = path_cache)
-meta_parameters <- get_metadata(sup[9], 'par', cache_dir = path_cache)
-md <- get_metadata(sup[9], cache_dir = path_cache)
+meta_datainv <- get_metadata(col[9], 'data', cache_dir = path_cache)
+meta_stations <- get_metadata(col[9], 'stat', cache_dir = path_cache)
+meta_parameters <- get_metadata(col[9], 'par', cache_dir = path_cache)
+md <- get_metadata(col[9], cache_dir = path_cache)
 
 dl <- search_by_location('7.43..7.49', '46.96..47.12', meta_data = metadata[7])
 dt <- search_by_datetime('01.09.2024 to 31.12.2025', meta_data = dl)

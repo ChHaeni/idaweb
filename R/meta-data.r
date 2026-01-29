@@ -128,6 +128,9 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                             tz = 'UTC', lt = FALSE)
                     }
                 )
+                # fix class
+                class(out) <- c(paste0('met_', type), 'data.frame')
+                # return
                 return(out)
             }
             nm <- sub('.+_meta_(.+)[.]csv', '\\1', file_name)
