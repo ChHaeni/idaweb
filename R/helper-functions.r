@@ -2,9 +2,15 @@
 ## fuzzy search (exported) ----------------------------------------
 
 # "fuzzy" searching strings
+# use equal sign for non-fuzzy search, e.g. '=Zollik'
 fuzzy_search <- function(pattern, string, value = FALSE, return_logical = FALSE,
     ignore.case = all(is.na(pmatch(LETTERS, pattern)))) {
-    fuz_pat <- paste(c('', unlist(strsplit(pattern, split = '')), ''), collapse = '.*')
+    # check for non-fuzzy search
+    if (grepl('^=', pattern)) {
+        fuz_pat <- sub('^=', '', pattern)
+    } else {
+        fuz_pat <- paste(c('', unlist(strsplit(pattern, split = '')), ''), collapse = '.*')
+    }
     if (return_logical) {
         grepl(fuz_pat, string, ignore.case = ignore.case)
     } else {
