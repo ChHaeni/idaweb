@@ -70,8 +70,7 @@ print.met_metadata <- function(x, ...) {
         data_till <- format(data_till)
     }
     # fix lon 
-    # lon <- sub('^0', ' ', sprintf('%09.6f', attr(x, 'wgs84_lon')))
-    # show only 3 digits (1e-3° ≈ 100 m)
+    # show only 3 digits (1e-3° is approx 100 m)
     if (any(is.na(attr(x, 'wgs84_lon')))) {
         lon <- lat <- NA_character_
     } else {
