@@ -8,7 +8,6 @@ export(search_by_datetime)
 export(search_by_location)
 export(search_by_parameter)
 export(get_data)
-export(fuzzy_search)
 # S3methods
 S3method(print, met_assets)
 S3method(print, met_collections)
