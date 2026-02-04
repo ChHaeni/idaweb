@@ -10,3 +10,4 @@ License: GPL-2
 Depends: data.table, lubridate
 Imports: httr
 LazyData: true
+RoxygenNote: 7.3.3
