@@ -456,7 +456,7 @@ fa_st <- function(x, tz) {
                     }
                 }
                 , 'd' = {
-                    if (check_manual) {
+                    if (grepl('ogd-nime_', fl$filename, fixed = TRUE)) {
                         # fix manual precipitation measurements
                         p_shift <- 6 * 3600
                         dat[, time := time + p_shift]
@@ -725,12 +725,12 @@ rbind_list <- \(x_list, deparse.level = 1) {
                 from = from,
                 to = min(to, now)
             )))
-    } else if (gran %in% c('t', 'h')) {
+    } else {
         if (is.na(to)) {
             to <- now
         }
         # add yesterday cut
-        if (from <= now && to > yd12) {
+        if (gran %in% c('t', 'h') && from <= now && to > yd12) {
             file_list <- c(file_list, list(list(
                     filename = paste(pre, stat, gran, 'now.csv', sep = '_'),
                     from = max(from, yd12),
