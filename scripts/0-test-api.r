@@ -103,6 +103,16 @@ if (!dir.exists(path_cache)) {
 # dl <- search_by_location('620..650', '190..210', meta_data = metadata[1])
 # dl <- search_by_location('600..602', '203..205', meta_data = metadata[1])
 
+# toplevel search function
+require(idaweb)
+meta_wind <- met_search('01.01.2025 to 04.02.2026', lon = '7.4..7.5', 
+    lat = '46.9..47.3', granularity = c('d', 'm'), group = 'wind')
+# if meta data is provided as list, the returned object will be a list, too
+data_wind1 <- get_data(meta_wind[[1]])
+data_wind2 <- get_data(meta_wind, outstruc = 'by-station', outclass = 'data.table')
+data_wind3 <- get_data(meta_wind[[1]], outstruc = 'cbind-all', outclass = 'data.table')
+data_wind4 <- get_data(meta_wind, outclass = 'ibts')
+
 ## old tests ----------------------------------------
 
 
