@@ -6,7 +6,7 @@ met_search <- function(
     # by datetime
     from, to, tz = get_tzone(from, to), 
     # by location
-    x, y, z, abbr, name, canton,
+    lon, lat, z, abbr, name, canton,
     # by parameter
     shortname, unit, group, description, 
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
@@ -15,9 +15,9 @@ met_search <- function(
     meta_data = idaweb::metadata, drop_nodata = TRUE
 ) {
     # first search by location
-    if (!all(missing(x), missing(y), missing(z), missing(abbr),
+    if (!all(missing(lon), missing(lat), missing(z), missing(abbr),
             missing(name), missing(canton))) {
-        meta_data <- search_by_location(x = x, y = y, z = z, abbr = abbr, 
+        meta_data <- search_by_location(lon = lon, lat = lat, z = z, abbr = abbr, 
             name = name, canton = canton, meta_data = meta_data, 
             drop_nodata = FALSE)
     }
@@ -126,18 +126,18 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to),
 
 ##  • by location ====================
 
-search_by_location <- function(x, y, z, abbr, name, canton, 
+search_by_location <- function(lon, lat, z, abbr, name, canton, 
     meta_data = idaweb::metadata, drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
     # TODO: ch_x & ch_y: same as above BUT additionally, only 100-thousands 
     #   -> distinguish between lv95 and lv03
-    #   -> check x/y as required in R and possibly flip
+    #   -> check lon/lat as required in R and possibly flip
     # only attach sf if really necessary
     # fix meta argument
     meta_data <- fix_meta_arg(meta_data)
-    # parse x & y
-    xy <- fix_wgs84(x, y)
+    # parse lon & lat
+    xy <- fix_wgs84(lon, lat)
     # reassign back
     xv <- lapply(xy, '[[', 1)
     yv <- lapply(xy, '[[', 2)
@@ -159,7 +159,7 @@ search_by_location <- function(x, y, z, abbr, name, canton,
             # subset by longitude
             s_lon <- meta_data$stations$station_coordinates_wgs84_lon 
             i_x <- unlist(lapply(xv, \(v) s_lon >= v[1] & s_lon <= v[2]))
-            search_location <- c(search_location, list(x = x))
+            search_location <- c(search_location, list(lon = lon))
         }
         # check y/lat
         if (is.null(yv)) {
@@ -168,7 +168,7 @@ search_by_location <- function(x, y, z, abbr, name, canton,
             # subset by latitude
             s_lat <- meta_data$stations$station_coordinates_wgs84_lat 
             i_y <- unlist(lapply(yv, \(v) s_lat >= v[1] & s_lat <= v[2]))
-            search_location <- c(search_location, list(y = y))
+            search_location <- c(search_location, list(lat = lat))
         }
         # check z/elevation
         if (is.null(zv)) {
@@ -251,7 +251,7 @@ search_by_location <- function(x, y, z, abbr, name, canton,
             search_parameters = attr(meta_data, 'search_parameters')
         )
     } else {
-        out <- sapply(meta_data, search_by_location, x = xv, y = yv, 
+        out <- sapply(meta_data, search_by_location, lon = xv, lat = yv, 
             z = zv, abbr = abbr, name = name,
             canton = canton, drop_nodata = drop_nodata, 
             simplify = FALSE
