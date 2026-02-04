@@ -6,7 +6,7 @@ met_search <- function(
     # by datetime
     from, to, tz = get_tzone(from, to), 
     # by location
-    lon, lat, z, abbr, name, canton,
+    lon, lat, alt, abbr, name, canton,
     # by parameter
     shortname, unit, group, description, 
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
@@ -15,9 +15,9 @@ met_search <- function(
     meta_data = idaweb::metadata, drop_nodata = TRUE
 ) {
     # first search by location
-    if (!all(missing(lon), missing(lat), missing(z), missing(abbr),
+    if (!all(missing(lon), missing(lat), missing(alt), missing(abbr),
             missing(name), missing(canton))) {
-        meta_data <- search_by_location(lon = lon, lat = lat, z = z, abbr = abbr, 
+        meta_data <- search_by_location(lon = lon, lat = lat, alt = alt, abbr = abbr, 
             name = name, canton = canton, meta_data = meta_data, 
             drop_nodata = FALSE)
     }
@@ -126,7 +126,7 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to),
 
 ##  • by location ====================
 
-search_by_location <- function(lon, lat, z, abbr, name, canton, 
+search_by_location <- function(lon, lat, alt, abbr, name, canton, 
     meta_data = idaweb::metadata, drop_nodata = FALSE) {
     # valid search entries:
     # lat & lon: '46.1..46.2', '46.1 to 46.2', '46.1/46.2', c(46.1, 46.2), 
@@ -141,8 +141,8 @@ search_by_location <- function(lon, lat, z, abbr, name, canton,
     # reassign back
     xv <- lapply(xy, '[[', 1)
     yv <- lapply(xy, '[[', 2)
-    # parse z
-    zv <- check_z_arg(z)
+    # parse alt
+    zv <- check_z_arg(alt)
     # select datainventory/station/parameters
     if ('datainventory' %in% names(meta_data)) {
         if (!is.null(sft <- attr(meta_data, 'search_location'))) {
@@ -177,7 +177,7 @@ search_by_location <- function(lon, lat, z, abbr, name, canton,
             # subset by elevation
             s_el <- meta_data$stations$station_height_masl
             i_z <- unlist(lapply(zv, \(v) s_el >= v[1] & s_el <= v[2]))
-            search_location <- c(search_location, list(z = z))
+            search_location <- c(search_location, list(alt = alt))
         }
         # check abbr
         if (missing(abbr) || is.null(abbr)) {
@@ -252,7 +252,7 @@ search_by_location <- function(lon, lat, z, abbr, name, canton,
         )
     } else {
         out <- sapply(meta_data, search_by_location, lon = xv, lat = yv, 
-            z = zv, abbr = abbr, name = name,
+            alt = zv, abbr = abbr, name = name,
             canton = canton, drop_nodata = drop_nodata, 
             simplify = FALSE
         )
