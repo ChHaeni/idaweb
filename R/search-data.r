@@ -1,7 +1,36 @@
 
 ## search wrapper (main function) ----------------------------------------
 
-# search wrapper
+#' Search Meteoswiss Data
+#'
+#' TODO
+#'
+#' @param from a character or POSIXt object. TODO
+#' @param to a character or POSIXt object. TODO
+#' @param tz character. TODO
+#' @param lon character. TODO
+#' @param lat character. TODO
+#' @param alt numeric. TODO
+#' @param abbr character. TODO
+#' @param name character. TODO
+#' @param canton character. TODO
+#' @param shortname character. TODO
+#' @param unit character. TODO
+#' @param group character. TODO
+#' @param description  character. TODO
+#' @param granularity character. TODO
+#' @param language character. TODO
+#' @param meta_data an object of class \code{met_metadata}. TODO
+#' @return object of class \code{met_metadata}. TODO
+#' @examples
+#'  \dontrun{
+#'  require(idaweb)
+#'  # search for wind data
+#'  meta_wind <- met_search('01.01.2025 to 04.02.2026', lon = '7.4..7.5', 
+#'      lat = '46.9..47.3', granularity = c('d', 'm'), group = 'wind')
+#'  # etc.
+#'  }
+#' @export
 met_search <- function(
     # by datetime
     from, to, tz = get_tzone(from, to), 
@@ -45,6 +74,16 @@ met_search <- function(
 
 ##  • by date & time ====================
 
+#' Search Meteoswiss Data by Date and Time
+#'
+#' TODO
+#'
+#' @param from a character or POSIXt object. TODO
+#' @param to a character or POSIXt object. TODO
+#' @param tz character. TODO
+#' @param meta_data an object of class \code{met_metadata}. TODO
+#' @return object of class \code{met_metadata}. TODO
+#' @export
 search_by_datetime <- function(from, to, tz = get_tzone(from, to), 
     meta_data = idaweb::metadata, drop_nodata = FALSE) {
     # fix meta argument
@@ -126,6 +165,19 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to),
 
 ##  • by location ====================
 
+#' Search Meteoswiss Data by Location
+#'
+#' TODO
+#'
+#' @param lon character. TODO
+#' @param lat character. TODO
+#' @param alt numeric. TODO
+#' @param abbr character. TODO
+#' @param name character. TODO
+#' @param canton character. TODO
+#' @param meta_data an object of class \code{met_metadata}. TODO
+#' @return object of class \code{met_metadata}. TODO
+#' @export
 search_by_location <- function(lon, lat, alt, abbr, name, canton, 
     meta_data = idaweb::metadata, drop_nodata = FALSE) {
     # valid search entries:
@@ -266,6 +318,19 @@ search_by_location <- function(lon, lat, alt, abbr, name, canton,
 
 ##  • by parameter ====================
 
+#' Search Meteoswiss Data by Parameter
+#'
+#' TODO
+#'
+#' @param shortname character. TODO
+#' @param unit character. TODO
+#' @param group character. TODO
+#' @param description  character. TODO
+#' @param granularity character. TODO
+#' @param language character. TODO
+#' @param meta_data an object of class \code{met_metadata}. TODO
+#' @return object of class \code{met_metadata}. TODO
+#' @export
 search_by_parameter <- function(shortname, unit, group, description, 
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
     language = c('en', 'de', 'fr', 'it'), 

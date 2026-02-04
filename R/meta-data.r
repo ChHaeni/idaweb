@@ -1,6 +1,14 @@
 
 # fetch available MeteoSwiss Open Data
 # run to show all supported collections: collections(TRUE)
+
+#' Fetch MeteoSwiss Open Data Collections (Ground-based) Measurements
+#'
+#' TODO
+#'
+#' @param set_name character. TODO
+#' @return object of class \code{met_collections}. TODO
+#' @export
 collections <- function(set_name = NULL) {
     if (is.list(set_name)) {
         set_names <- sub('.*\\.ogd-', '', names(set_name))
@@ -30,6 +38,16 @@ collections <- function(set_name = NULL) {
 # info <- function(x, i = NULL) {
 # }
 
+#' Access Meta Data Parameter Info
+#'
+#' TODO
+#'
+#' @param meta_data \code{met_metadata}. TODO
+#' @param as_dt logical. Default \code{FALSE}. TODO
+#' @param cols character vector. Default \code{NULL}. TODO
+#' @param uniq logical. Default \code{!is.null(cols)}. TODO
+#' @return object of class \code{met_parameters}. TODO
+#' @export
 parameters <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
         out <- meta_data$parameters
@@ -55,6 +73,16 @@ parameters <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(co
     out
 }
 
+#' Access Meta Data Station Info
+#'
+#' TODO
+#'
+#' @param meta_data \code{met_metadata}. TODO
+#' @param as_dt logical. Default \code{FALSE}. TODO
+#' @param cols character vector. Default \code{NULL}. TODO
+#' @param uniq logical. Default \code{!is.null(cols)}. TODO
+#' @return object of class \code{met_stations}. TODO
+#' @export
 stations <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
         out <- meta_data$stations
@@ -80,6 +108,16 @@ stations <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols
     out
 }
 
+#' Access Meta Data Inventory Info
+#'
+#' TODO
+#'
+#' @param meta_data \code{met_metadata}. TODO
+#' @param as_dt logical. Default \code{FALSE}. TODO
+#' @param cols character vector. Default \code{NULL}. TODO
+#' @param uniq logical. Default \code{!is.null(cols)}. TODO
+#' @return object of class \code{met_datainventory}. TODO
+#' @export
 datainventory <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
         out <- meta_data$datainventory
