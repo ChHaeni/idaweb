@@ -143,7 +143,7 @@ datainventory <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null
 
 # get meta data
 get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters'),
-    cache_dir = NULL, force_cache = FALSE) {
+    cache_dir = NULL) {
     type <- match.arg(type)
     if (length(id) == 1L) {
         # check supported id
@@ -177,7 +177,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
                 }
                 # download file
                 cat('-> Fetching new data from MeteoSwiss - ')
-                local_file <- .dl_data(file_url, cache_dir, force_cache, file_checksum)
+                local_file <- .dl_data(file_url, cache_dir, file_checksum)
                 out <- read.table(local_file, sep = ';', header = TRUE, fill = TRUE,
                         fileEncoding = 'Windows-1252', comment.char = '', quote = '"'
                     )
@@ -212,8 +212,7 @@ get_metadata <- function(id, type = c('datainventory', 'stations', 'parameters')
         }
     } else {
         # get data
-        out <- lapply(id, get_metadata, type = type, cache_dir = cache_dir, 
-            force_cache = force_cache)
+        out <- lapply(id, get_metadata, type = type, cache_dir = cache_dir)
         names(out) <- id
         # remove invalid
         return(out[!sapply(out, is.null)])

@@ -8,7 +8,6 @@
 #'
 #' @param meta_data An object of class \code{met_metadata} - a collection of meta data on the data which should be downloaded.
 #' @param cache_dir character. Path to the directory where the cached data is saved. Default is \code{tempdir()}.
-#' @param force_cache logical. Should the argument \code{cache_dir} be taken, even if the cached data has been saved elsewhere during the current R session? Default is \code{FALSE}.
 #' @param single_timestamp logical. Should a single time stamp be given in the data (default), or should the start and end (named \code{'st'} and \code{'et'}) of each interval be provided?
 #' @param outclass character. Class of the returned data. Default is \code{data.frame}. See \code{Details} on how data is provided.
 #' @param outstruc character. How should the returned object be structured? Default is \code{'split-all'}. See \code{Details} for available options.
@@ -36,8 +35,8 @@
 #'  data_wind4 <- get_data(meta_wind, outclass = 'ibts')
 #'  }
 #' @export
-get_data <- function(meta_data, cache_dir = tempdir(), force_cache = FALSE, 
-    single_timestamp = TRUE, outclass = c('data.frame', 'data.table', 'ibts', 'df', 'dt'),
+get_data <- function(meta_data, cache_dir = tempdir(), single_timestamp = TRUE, 
+    outclass = c('data.frame', 'data.table', 'ibts', 'df', 'dt'),
     outstruc = c('split-all', 'by-station', 'by-granularity', 'cbind-all')
     ) {
     # check arguments
@@ -49,7 +48,7 @@ get_data <- function(meta_data, cache_dir = tempdir(), force_cache = FALSE,
     }
     if (inherits(meta_data, 'file_list')) {
         # get files
-        meta_data <- .get_files(meta_data, cache_dir, force_cache = force_cache)
+        meta_data <- .get_files(meta_data, cache_dir)
     }
     if (inherits(meta_data, 'dl_files')) {
         # get data from files
@@ -59,7 +58,7 @@ get_data <- function(meta_data, cache_dir = tempdir(), force_cache = FALSE,
         # loop over list
         sapply(meta_data, get_data, cache_dir = cache_dir, outclass = outclass,
             outstruc = outstruc, single_timestamp = single_timestamp, 
-            force_cache = force_cache, simplify = FALSE)
+            simplify = FALSE)
     }
 }
 

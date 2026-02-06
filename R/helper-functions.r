@@ -635,7 +635,7 @@ rbind_list <- \(x_list, deparse.level = 1) {
 
 ##  • get file info ====================
 
-.get_files <- function(x, cache_dir = NULL, force_cache = FALSE) {
+.get_files <- function(x, cache_dir = NULL) {
     # check if more than one collection
     # also check class
     # get collection
@@ -655,9 +655,9 @@ rbind_list <- \(x_list, deparse.level = 1) {
                     # what if missing?
                     if (fl$filename %in% names(info)) {
                         .dl_data(met_url(cl, '/', l$station, '/', fl$filename), 
-                            cache_dir, force_cache = force_cache,
-                            checksum = info[[fl$filename]][['file:checksum']]) 
+                            cache_dir, checksum = info[[fl$filename]][['file:checksum']]) 
                     } else {
+                        # FIXME: remove me before moving to public server
                         browser()
                         warning('file "', fl$filename, '" cannot be downloaded')
                         NULL
@@ -809,38 +809,48 @@ rbind_list <- \(x_list, deparse.level = 1) {
 
 # helper function to download data
 # and get path to local file
-.dl_data <- function(url, cache_dir = NULL, force_cache = FALSE, checksum = NULL) {
+.dl_data <- function(url, cache_dir = NULL, checksum = NULL) {
     # get data name
     data_name <- basename(url)
-    # check if data is already available locally
-    if (force_cache) {
-        local_file <- NULL
-    } else {
-        local_file <- getOption(data_name)
+    # check if directory exists
+    if (!file.exists(cache_dir)) {
+        stop('directory "', cache_dir, '" does not exist!')
     }
-    # check if cache_dir matches
-    if (is.null(local_file)) {
-        # check cache_dir
-        if (is.null(cache_dir)) cache_dir <- tempdir()
-        # check if directory exists
-        if (!file.exists(cache_dir)) {
-            stop('directory "', cache_dir, '" does not exist!')
-        }
-        # temporary file path
+    # get full path
+    if (is.null(cache_dir)) {
+        # R session temporary path
+        local_file <- getOption(data_name, file.path(tempdir(), data_name))
+    } else {
         local_file <- file.path(cache_dir, data_name)
-        # check if file exists nevertheless
-        if (!file.exists(local_file)) {
-            # download file
-            dl_code <- download.file(url = url, destfile = local_file)
-            if (dl_code != 0L) {
-                stop('Download of file "', url, '" failed with exit code ', dl_code, 
-                    call. = FALSE)
+    }
+    # check if data is already available locally
+    if (local_ok <- file.exists(local_file)) {
+        # check checksum
+        # I guess I can't assume that checksum is always available starting with 1220...
+        if (is.null(checksum) || !grepl('^1220', checksum)) {
+            local_ok <- FALSE
+            warning('remote checksum failure')
+        } else {
+            # check checksum file
+            local_ok <- sub('^1220', '', checksum) == 
+                    as.character(openssl::sha256(file(local_file)))
+            if (!local_ok) {
+                cat(paste0('local file "', local_file, '" is not up-to-date\n'))
             }
+        }
+    }
+    # check if file needs to be downloaded
+    if (!local_ok) {
+        # download file
+        dl_code <- download.file(url = url, destfile = local_file)
+        if (dl_code != 0L) {
+            stop('Download of file "', url, '" failed with exit code ', dl_code, 
+                call. = FALSE)
         }
         # check checksum if available
         if (!is.null(checksum)) {
             if (!grepl('^1220', checksum)) {
-                stop('dubious checksum start "1220" has been changed or removed -> FIX ME')
+                warning('remote checksum start "1220" has been changed or removed')
             }
             # get checksum
             if (sub('^1220', '', checksum) != 
@@ -848,12 +858,11 @@ rbind_list <- \(x_list, deparse.level = 1) {
                 warning('checksum of file "', local_file ,
                     '" does not match provided "file:checksum"!')
             }
+        } else {
+            warning('remote checksum failure')
         }
         # add path to options
         options(setNames(list(local_file), data_name))
-    } else if (!is.null(cache_dir) && !grepl(cache_dir, local_file, fixed = TRUE)) {
-        warning('file: "', data_name, '" has already been downloaded to "', 
-            dirname(local_file), '".\n -> ignoring cache_dir argument.')
     }
     cat('data available at', local_file, '\n')
     # return path
