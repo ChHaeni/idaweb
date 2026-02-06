@@ -103,6 +103,13 @@ if (!dir.exists(path_cache)) {
 # dl <- search_by_location('620..650', '190..210', meta_data = metadata[1])
 # dl <- search_by_location('600..602', '203..205', meta_data = metadata[1])
 
+require(idaweb)
+meta_wind <- met_search('01.01.2025 to 04.02.2026', lon = '7.3..7.6', 
+    lat = '46.9..47.3', granularity = c('d', 'm'), group = 'wind')
+
+source('scripts/show-on-map.r')
+show_on_map(meta_wind)
+
 # toplevel search function
 require(idaweb)
 meta_wind <- met_search('01.01.2025 to 04.02.2026', lon = '7.4..7.5', 
