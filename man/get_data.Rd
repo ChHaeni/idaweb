@@ -7,7 +7,6 @@
 get_data(
   meta_data,
   cache_dir = tempdir(),
-  force_cache = FALSE,
   single_timestamp = TRUE,
   outclass = c("data.frame", "data.table", "ibts", "df", "dt"),
   outstruc = c("split-all", "by-station", "by-granularity", "cbind-all")
@@ -17,8 +16,6 @@ get_data(
 \item{meta_data}{An object of class \code{met_metadata} - a collection of meta data on the data which should be downloaded.}
 
 \item{cache_dir}{character. Path to the directory where the cached data is saved. Default is \code{tempdir()}.}
-
-\item{force_cache}{logical. Should the argument \code{cache_dir} be taken, even if the cached data has been saved elsewhere during the current R session? Default is \code{FALSE}.}
 
 \item{single_timestamp}{logical. Should a single time stamp be given in the data (default), or should the start and end (named \code{'st'} and \code{'et'}) of each interval be provided?}
 
