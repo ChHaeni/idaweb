@@ -391,7 +391,7 @@ fa_st <- function(x, tz) {
 # m: The sum, mean or max/min of the whole month from 1st to last day of month (ReferenceTS 1.6.2023 = 1.6.2023 00:10 UTC to 30.6.2023 24:00 UTC)
 # y: The sum, mean or max/min of the whole year (ReferenceTS 1.1.2023 = 1.1.2023 00:10 UTC to 31.12.2023 24:00 UTC)
 
-.get_data <- function(x, single_timestamp = TRUE, 
+.get_data <- function(x, single_timestamp = TRUE, tzone = 'UTC',
     outclass = c('data.table', 'data.frame', 'ibts', 'df', 'dt'),
     outstruc = c('split-all', 'by-station', 'by-granularity', 'cbind-all')
     ) {
@@ -505,12 +505,23 @@ fa_st <- function(x, tz) {
         if (single_timestamp) {
             # remove st/et
             dout[, c('st', 'et') := NULL]
+            # fix time zone
+            if (tzone != 'UTC') {
+                dout[, time := lubridate::with_tz(time, tzone)]
+            }
             # sort by time as first column
             setcolorder(dout, c('time', 'station_abbr', 'granularity'))
             setorder(dout, 'time')
         } else {
             # remove time
             dout[, time := NULL]
+            # fix time zone
+            if (tzone != 'UTC') {
+                dout[, ':='(
+                    st = lubridate::with_tz(st, tzone),
+                    et = lubridate::with_tz(et, tzone)
+                )]
+            }
             # sort by st/et as first column
             setcolorder(dout, c('st', 'et', 'station_abbr', 'granularity'))
             setorder(dout, 'et')

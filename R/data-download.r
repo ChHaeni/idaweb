@@ -11,6 +11,7 @@
 #' @param single_timestamp logical. Should a single time stamp be given in the data (default), or should the start and end (named \code{'st'} and \code{'et'}) of each interval be provided?
 #' @param outclass character. Class of the returned data. Default is \code{data.frame}. See \code{Details} on how data is provided.
 #' @param outstruc character. How should the returned object be structured? Default is \code{'split-all'}. See \code{Details} for available options.
+#' @param tzone character. Time zone of times in returned data. Default: 'UTC'.
 #' @return Meteoswiss data provided as a \code{list}, except if argument \code{outstruc} is set to \code{'cbind-all'}. If argument \code{meta_data} is provided as a list of meta data (e.g. like the default \code{idaweb::metadata}), the returned object will have the same list structure on the top level (see \code{Details}).
 #' @details 
 #'  Argument \code{outstruc} can be used to structure the output in four different ways:
@@ -37,7 +38,8 @@
 #' @export
 get_data <- function(meta_data, cache_dir = tempdir(), single_timestamp = TRUE, 
     outclass = c('data.frame', 'data.table', 'ibts', 'df', 'dt'),
-    outstruc = c('split-all', 'by-station', 'by-granularity', 'cbind-all')
+    outstruc = c('split-all', 'by-station', 'by-granularity', 'cbind-all'),
+    tzone = 'UTC'
     ) {
     # check arguments
     outclass <- match.arg(outclass)
@@ -53,12 +55,12 @@ get_data <- function(meta_data, cache_dir = tempdir(), single_timestamp = TRUE,
     if (inherits(meta_data, 'dl_files')) {
         # get data from files
         .get_data(meta_data, outclass = outclass, outstruc = outstruc,
-            single_timestamp = single_timestamp)
+            single_timestamp = single_timestamp, tzone = tzone)
     } else {
         # loop over list
         sapply(meta_data, get_data, cache_dir = cache_dir, outclass = outclass,
             outstruc = outstruc, single_timestamp = single_timestamp, 
-            simplify = FALSE)
+            tzone = tzone, simplify = FALSE)
     }
 }
 
