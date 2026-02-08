@@ -5,16 +5,16 @@
 #'
 #' TODO
 #'
-#' @param from a character or POSIXt object. TODO
-#' @param to a character or POSIXt object. TODO
-#' @param tz character. TODO
-#' @param lon character. TODO
-#' @param lat character. TODO
-#' @param alt numeric. TODO
-#' @param abbr character. TODO
-#' @param name character. TODO
+#' @param from a character or POSIXt object. Start date-time of the data series.
+#' @param to a character or POSIXt object. End date-time of the data series.
+#' @param tz character. Time zone of arguments \code{from} and \code{to}.
+#' @param lon character. Longitudinal coordinate range to search for weather stations. Can be provided in WGS84 or LV03 coordinates (see \code{\link{Details}}).
+#' @param lat character. Latitudinal coordinate range to search for weather stations. Can be provided in WGS84 or LV03 coordinates (see \code{\link{Details}}).
+#' @param alt numeric. Altitude range to search for weather stations.
+#' @param abbr character. Weather station abbreviation (three capital letters).
+#' @param name character. TODO !! change name to station? or station_name and allow short form (->match.args())
 #' @param canton character. TODO
-#' @param shortname character. TODO
+#' @param shortname character. TODO !! change shortname to parameter? or parameter_name and allow short form?
 #' @param unit character. TODO
 #' @param group character. TODO
 #' @param description  character. TODO
@@ -22,6 +22,7 @@
 #' @param language character. TODO
 #' @param meta_data an object of class \code{met_metadata}. TODO
 #' @return object of class \code{met_metadata}. TODO
+#' @details 
 #' @examples
 #'  \dontrun{
 #'  require(idaweb)
