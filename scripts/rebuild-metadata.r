@@ -13,12 +13,12 @@ if (FALSE) {
     load('data/metadata.rda')
     path_cache <- 'cached'
     # args(get_metadata)
-    meta_datainv <- get_metadata(sup, 'data', cache_dir = path_cache)
-    meta_stations <- get_metadata(sup, 'stat', cache_dir = path_cache)
-    meta_parameters <- get_metadata(sup, 'par', cache_dir = path_cache)
+    meta_datainv <- idaweb:::get_metadata(sup, 'data', cache_dir = path_cache)
+    meta_stations <- idaweb:::get_metadata(sup, 'stat', cache_dir = path_cache)
+    meta_parameters <- idaweb:::get_metadata(sup, 'par', cache_dir = path_cache)
 
     # rebuild meta data
-    meta_data <- mapply(\(col, inv, stat, para) {
+    metadata <- mapply(\(col, inv, stat, para) {
             col_out <- structure(col$id, title = col$title, 
                 description = col$description)
             meta_data <- list(
@@ -43,8 +43,8 @@ if (FALSE) {
         attr(sup, 'collections'), meta_datainv, meta_stations, meta_parameters, 
         SIMPLIFY = FALSE
     )
-    names(meta_data) <- sup
-    save(meta_data, file = 'data/metadata.rda')
+    names(metadata) <- sup
+    save(metadata, file = 'data/metadata.rda')
 
 }
 
