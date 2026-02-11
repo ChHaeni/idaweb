@@ -86,9 +86,10 @@ print.met_metadata <- function(x, ...) {
     # get collection info
     col <- attr(x, 'collection')
     # cat('~~~\n')
-    cat('~~~ meta data ~~~\n')
+    cat('~~~~~~~~~~~~~~~~~\n')
     cat('Collection:', col, '\n')
-    cat('**', attr(col, 'title'), '**\n')
+    cat('**', attr(col, 'title'), '**\n\n')
+    cat('~~~ meta data ~~~\n')
     ncs <- nchar(nms <- names(x[['assets']]))
     names(ncs) <- nms
     # fix order: stat, para, data
@@ -162,10 +163,10 @@ print.met_metadata <- function(x, ...) {
             }
         }
     }
-    cat('~~~\n')
-    cat('..$datainventory\n')
-    #########
-    print_dense(x[['datainventory']], ...)
+    # cat('~~~\n')
+    # cat('..$datainventory\n')
+    # #########
+    # print_dense(x[['datainventory']], ...)
     cat('~~~~~~~~~~~~~~~~~\n')
 }
 
