@@ -6,12 +6,21 @@
 
 remotes::install_github('ChHaeni/idaweb')
 
+# attach idaweb package for examples below
+library(idaweb)
+
 # ## Usage examples
+
+# ### 1. Daily Averages Of Air Temperature At Zollikofen Meteostation between 12.08.2024 and 02.02.2026
+
+# ### 2. Hourly Averages Of Wind Speed and Wind Direction At Meteostations in the Kanton of Jura for 12.08.2024
+
+# ### 3. Yearly Precipitation in Adelboden between 1999 and 2025
+
+# ## Further "Explanation" Of Individual Functions
 
 # ### Available Data Collections
 
-# attach idaweb package
-library(idaweb)
 
 # collections meta data is available with the package as list object
 print(metadata)
@@ -28,7 +37,9 @@ names(metadata)
 # access station meta data
 stations(metadata)
 # parameter meta data
+parameters(metadata)
 # data inventory meta data
+datainventory(metadata)
 
 # ### Searching Stations By Location
 
