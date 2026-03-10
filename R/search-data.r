@@ -206,7 +206,7 @@ search_by_location <- function(lon, lat, alt, abbr, name, canton,
         n_stations <- nrow(meta_data$stations)
         # TODO: improve these if/else tests! and capture errors
         # check x/lon
-        if (is.null(xv)) {
+        if (is.null(xv) || length(xv) == 0) {
             i_x <- rep(TRUE, n_stations)
         } else {
             # subset by longitude
@@ -215,7 +215,7 @@ search_by_location <- function(lon, lat, alt, abbr, name, canton,
             search_location <- c(search_location, list(lon = lon))
         }
         # check y/lat
-        if (is.null(yv)) {
+        if (is.null(yv) || length(yv) == 0) {
             i_y <- rep(TRUE, n_stations)
         } else {
             # subset by latitude
@@ -224,7 +224,7 @@ search_by_location <- function(lon, lat, alt, abbr, name, canton,
             search_location <- c(search_location, list(lat = lat))
         }
         # check z/elevation
-        if (is.null(zv)) {
+        if (is.null(zv) || length(zv) == 0) {
             i_z <- rep(TRUE, n_stations)
         } else {
             # subset by elevation

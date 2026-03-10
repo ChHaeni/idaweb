@@ -89,7 +89,7 @@ print_dense <- function(x, ntop = 6, nbottom = ntop, center_sep = '---',
 ## search-data ----------------------------------------
 
 check_xy_arg <- function(xy) {
-    if (missing(xy) || is.null(xy)) {
+    if (missing(xy) || is.null(xy) || length(xy) == 0) {
         return(NULL)
     }
     if (is.list(xy) && all(sapply(xy, is.numeric)) &&
@@ -165,6 +165,7 @@ fix_wgs84 <- function(x, y) {
     if (!requireNamespace('sf', quietly = TRUE)) {
         stop('package "sf" is required to transform CH-coordinates - run install.packages("sf") to install')
     }
+    if (missing(x) || is.null(x) || missing(y) || is.null(y)) return(NULL)
     # parse x
     xv <- check_xy_arg(x)
     # parse y
