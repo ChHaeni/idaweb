@@ -748,6 +748,7 @@ rbind_list <- \(x_list, deparse.level = 1) {
             to <- now
         }
         # add yesterday cut
+        # now (yesterday at 12 UTC to now)
         if (gran %in% c('t', 'h') && from <= now && to > yd12) {
             file_list <- c(file_list, list(list(
                     filename = paste(pre, stat, gran, 'now.csv', sep = '_'),
@@ -761,14 +762,16 @@ rbind_list <- \(x_list, deparse.level = 1) {
         yd_midnight <- yd12
         hour(yd_midnight) <- 23
         second(yd_midnight) <- minute(yd_midnight) <- 59
-        if (from <= cy_jan && to > cy_jan) {
+        # recent (1.1. of current year to yesterday)
+        if (to > cy_jan && from <= yd_midnight) {
             file_list <- c(file_list, list(list(
                     filename = paste(pre, stat, gran, 'recent.csv', sep = '_'),
                     from = max(from, cy_jan),
                     to = min(to, yd_midnight)
                 )))
         } 
-        if (from < yd12 && to > cy_jan_minus_1y && month(now) <= 2) {
+        # recent (when querried before March)
+        if (from < yd_midnight && to > cy_jan_minus_1y && month(now) <= 2) {
             # previous year is included in current year until February (see mail support)
             if ((l <- length(file_list)) > 0 && grepl('recent', file_list[[l]]$filename)) {
                 # update from & to, only
