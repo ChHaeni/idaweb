@@ -2,12 +2,33 @@
 # fetch available MeteoSwiss Open Data
 # run to show all supported collections: collections(TRUE)
 
-#' Fetch MeteoSwiss Open Data Collections (Ground-based) Measurements
+#' Fetch MeteoSwiss Open Data Collections of Ground-based Measurements
 #'
-#' TODO
+#' Retrieves metadata for the most of the available ground-based measurement 
+#' Open Data collections exposed via the MeteoSwiss STAC API. 
 #'
-#' @param set_name character. TODO
-#' @return object of class \code{met_collections}. TODO
+#' @param set_name A character vector of collection short names (e.g.
+#'   \code{"smn"}). If \code{NULL} (the default), all ground-based 
+#'   collections available through this package are queried.
+#'
+#' @return An object of class \code{met_collections}: a character vector of
+#'   collection IDs with a \code{collections} attribute containing the raw
+#'   API responses.
+#'
+#' @details The default collections are: \code{smn}, \code{smn-precip},
+#'   \code{smn-tower}, \code{nime}, \code{tot}, \code{pollen}, \code{obs},
+#'   and \code{phenology}.
+#'
+#' @examples
+#' \dontrun{
+#' # get all collections and print to console for a quick overview
+#' cols <- collections()
+#' print(cols)
+#' # automatic weather stations
+#' cols <- collections("smn")
+#' # automatic weather stations and manual precipitation stations
+#' cols <- collections(c("smn", "nime"))
+#' }
 #' @export
 collections <- function(set_name = NULL) {
     if (is.list(set_name)) {
