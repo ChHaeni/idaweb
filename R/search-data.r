@@ -25,7 +25,8 @@
 #' @param abbr Station abbreviation(s) as three-letter character vector(s)
 #'   (e.g. \code{"BER"}).
 #' @param name Character string for fuzzy matching against station names.
-#'   Prefix with \code{=} to force exact matching (e.g. \code{uetl} vs. \code{=uetl}).
+#'   Prefix with \code{=} to force non-fuzzy (partial) matching 
+#'   (e.g. \code{uetl} vs. \code{=uetl}).
 #' @param canton Character vector of canton abbreviations (e.g. \code{"BE"}).
 #' @param shortname Parameter short name(s) to search for (partial matching
 #'   via \code{\link[base]{grep}}).
@@ -135,15 +136,30 @@ met_search <- function(
 
 ##  • by date & time ====================
 
-#' Search Meteoswiss Data by Date and Time
+#' Filter Metadata by Date and Time
 #'
-#' TODO
+#' Subsets a \code{met_metadata} object (or a list thereof) by temporal coverage.
+#' Only station-parameter combinations whose data inventory overlaps with the
+#' requested interval are retained.
 #'
-#' @param from a character or POSIXt object. TODO
-#' @param to a character or POSIXt object. TODO
-#' @param tz character. TODO
-#' @param meta_data an object of class \code{met_metadata}. TODO
-#' @return object of class \code{met_metadata}. TODO
+#' @param from Start date/time. See \code{\link{met_search}}.
+#' @param to End date/time. See \code{\link{met_search}}.
+#' @param tz Time zone for \code{from} and \code{to}. See \code{\link{met_search}}.
+#' @param meta_data A \code{met_metadata} object or list thereof. Defaults to
+#'   \code{\link[idaweb]{metadata}}.
+#' @param drop_nodata Logical. If \code{TRUE}, collections with an empty
+#'   inventory after filtering are removed.
+#'
+#' @return A \code{met_metadata} object or a list thereof.
+#'
+#' @seealso \code{\link{search_by_location}}, \code{\link{search_by_parameter}}
+#'
+#' @examples
+#' \dontrun{
+#' meta <- search_by_datetime("01.01.2020", "31.12.2020")
+#' meta <- search_by_datetime("01.01.2020", 
+#'   meta_data = idaweb::metadata[[1]])
+#' }
 #' @export
 search_by_datetime <- function(from, to, tz = get_tzone(from, to), 
     meta_data = idaweb::metadata, drop_nodata = FALSE) {
@@ -226,18 +242,49 @@ search_by_datetime <- function(from, to, tz = get_tzone(from, to),
 
 ##  • by location ====================
 
-#' Search Meteoswiss Data by Location
+#' Filter Metadata by Location
 #'
-#' TODO
+#' Subsets a \code{met_metadata} object (or list thereof) based on geographic or
+#' administrative criteria.
 #'
-#' @param lon character. TODO
-#' @param lat character. TODO
-#' @param alt numeric. TODO
-#' @param abbr character. TODO
-#' @param name character. TODO
-#' @param canton character. TODO
-#' @param meta_data an object of class \code{met_metadata}. TODO
-#' @return object of class \code{met_metadata}. TODO
+#' @param lon Longitudinal range. See \code{\link{met_search}}.
+#' @param lat Latitudinal range. See \code{\link{met_search}}.
+#' @param alt Altitude range in metres. See \code{\link{met_search}}.
+#' @param abbr Exact station abbreviation(s).
+#' @param name Fuzzy station name pattern.
+#' @param canton Exact canton abbreviation(s).
+#' @param meta_data A \code{met_metadata} object or list thereof. Defaults to
+#'   \code{\link[idaweb]{metadata}}.
+#' @param drop_nodata Logical. If \code{TRUE}, collections with an empty
+#'   inventory after filtering are removed.
+#'
+#' @return A \code{met_metadata} object or a list thereof.
+#'
+#' @details
+#' Coordinates are interpreted as WGS84 when values fall into typical
+#' longitude/latitude ranges. Swiss coordinates (LV03 or LV95) are
+#' automatically converted to WGS84 using \pkg{sf} if that package is
+#' installed. \code{lon} and \code{lat} must be provided pairwise.
+#'
+#' Station names are matched with a fuzzy search algorithm unless the
+#' pattern is prefixed with \code{=}, then they are partially matched.
+#'
+#' @seealso \code{\link{search_by_datetime}}, \code{\link{search_by_parameter}}
+#'
+#' @examples
+#' \dontrun{
+#' meta <- search_by_location(lon = "7.4..7.5", lat = "46.9..47.3")
+#' meta <- search_by_location(abbr = c("BER", "ZUE"))
+#' meta <- search_by_location(name = "Zurich")
+#' meta <- search_by_location(canton = "BE")
+#' # Compare the following (case insensitive)
+#' # 6 station names match by fuzzy search (i.e. any sequence of .*b.*e.*r.*n.*)
+#' m1 <- search_by_location(name = "bern", meta_data = idaweb::metadata[[1]])
+#' # 4 station names match by partial matching (i.e. matching .*bern.*)
+#' m2 <- search_by_location(name = "=bern", meta_data = idaweb::metadata[[1]])
+#' # 1 station name matches that starts with bern (i.e. matching ^bern.*)
+#' m3 <- search_by_location(name = "=^bern", meta_data = idaweb::metadata[[1]])
+#' }
 #' @export
 search_by_location <- function(lon, lat, alt, abbr, name, canton, 
     meta_data = idaweb::metadata, drop_nodata = FALSE) {
@@ -379,18 +426,35 @@ search_by_location <- function(lon, lat, alt, abbr, name, canton,
 
 ##  • by parameter ====================
 
-#' Search Meteoswiss Data by Parameter
+#' Filter Metadata by Parameter
 #'
-#' TODO
+#' Subsets a \code{met_metadata} object (or list) based on measurement
+#' parameter characteristics.
 #'
-#' @param shortname character. TODO
-#' @param unit character. TODO
-#' @param group character. TODO
-#' @param description  character. TODO
-#' @param granularity character. TODO
-#' @param language character. TODO
-#' @param meta_data an object of class \code{met_metadata}. TODO
-#' @return object of class \code{met_metadata}. TODO
+#' @param shortname Parameter short name(s) to grep for.
+#' @param unit Parameter unit(s) to grep for.
+#' @param group Parameter group(s) to fuzzy-match (e.g. \code{"wind"},
+#'   \code{"temperature"}). Language-dependent.
+#' @param description Parameter description(s) to fuzzy-match.
+#'   Language-dependent. Prefix with \code{=} for non-fuzzy (partial) matching.
+#' @param granularity Temporal granularity(s): \code{"T"}, \code{"H"},
+#'   \code{"D"}, \code{"M"}, \code{"Y"}. Default is all.
+#' @param language Language for \code{group} and \code{description} labels:
+#'   \code{"en"} (default), \code{"de"}, \code{"fr"}, or \code{"it"}.
+#' @param meta_data A \code{met_metadata} object or list thereof. Defaults to
+#'   \code{\link[idaweb]{metadata}}.
+#' @param drop_nodata Logical. If \code{TRUE}, collections with an empty
+#'   inventory after filtering are removed.
+#'
+#' @return A \code{met_metadata} object or a list thereof.
+#'
+#' @seealso \code{\link{search_by_datetime}}, \code{\link{search_by_location}}
+#'
+#' @examples
+#' \dontrun{
+#' meta <- search_by_parameter(group = "precipitation", granularity = "D")
+#' meta <- search_by_parameter(shortname = "tre200s0")
+#' }
 #' @export
 search_by_parameter <- function(shortname, unit, group, description, 
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
