@@ -1,43 +1,103 @@
 
 ## search wrapper (main function) ----------------------------------------
 
-#' Search Meteoswiss Data
+#' Search MeteoSwiss Open Data
 #'
-#' TODO
+#' Flexible search interface to filter MeteoSwiss ground-based measurement
+#' metadata by date/time, location, and/or parameter. The function chains
+#' \code{\link{search_by_location}}, \code{\link{search_by_parameter}}, and
+#' \code{\link{search_by_datetime}} according to the arguments provided.
 #'
-#' @param from a character or POSIXt object. Start date-time of the data series.
-#' @param to a character or POSIXt object. End date-time of the data series.
-#' @param tz character. Time zone of arguments \code{from} and \code{to}.
-#' @param lon character. Longitudinal coordinate range to search for weather stations. Can be provided in WGS84 or LV03 coordinates (see \code{\link{Details}}).
-#' @param lat character. Latitudinal coordinate range to search for weather stations. Can be provided in WGS84 or LV03 coordinates (see \code{\link{Details}}).
-#' @param alt numeric. Altitude range to search for weather stations.
-#' @param abbr character. Weather station abbreviation (three capital letters).
-#' @param name character. TODO !! change name to station? or station_name and allow short form (->match.args())
-#' @param canton character. TODO
-#' @param shortname character. TODO !! change shortname to parameter? or parameter_name and allow short form?
-#' @param unit character. TODO
-#' @param group character. TODO
-#' @param description  character. TODO
-#' @param granularity character. TODO
-#' @param language character. TODO
-#' @param meta_data an object of class \code{met_metadata}. TODO
-#' @return object of class \code{met_metadata}. TODO
-#' @details 
+#' @param from Start date/time. Can be a \code{character} string (e.g.
+#'   \code{"01.01.2020"} or \code{"01.01.2020 to 31.12.2020"}) or a
+#'   \code{POSIXt} object.
+#' @param to End date/time. Can be a \code{character} string or a
+#'   \code{POSIXt} object. If omitted, an open-ended interval is assumed.
+#' @param tz Time zone for \code{from} and \code{to}. Default is inferred
+#'   from the inputs or falls back to \code{"UTC"}.
+#' @param lon Longitudinal range. Accepts WGS84 (approx. 5\u00B0–11\u00B0) or Swiss
+#'   coordinate values. Ranges can be given as \code{"7.4..7.5"},
+#'   \code{"7.4 to 7.5"}, or a numeric vector \code{c(7.4, 7.5)}.
+#' @param lat Latitudinal range. Accepts WGS84 (approx. 45\u00B0–48\u00B0) or Swiss
+#'   coordinate values (see \code{lon}).
+#' @param alt Altitude range in metres a.s.l. Same range format as \code{lon}/\code{lat}
+#'   or a numeric vector. Use \code{-Inf}/\code{Inf} for either side open limit.
+#' @param abbr Station abbreviation(s) as three-letter character vector(s)
+#'   (e.g. \code{"BER"}).
+#' @param name Character string for fuzzy matching against station names.
+#'   Prefix with \code{=} to force exact matching (e.g. \code{uetl} vs. \code{=uetl}).
+#' @param canton Character vector of canton abbreviations (e.g. \code{"BE"}).
+#' @param shortname Parameter short name(s) to search for (partial matching
+#'   via \code{\link[base]{grep}}).
+#' @param unit Parameter unit(s) to search for (partial matching).
+#' @param group Parameter group(s) to search for (fuzzy matching). The search
+#'   is language-dependent.
+#' @param description Parameter description(s) to search for (fuzzy matching).
+#'   The search is language-dependent.
+#' @param granularity Temporal granularity(s) to include: \code{"T"} (10 min),
+#'   \code{"H"} (hourly), \code{"D"} (daily), \code{"M"} (monthly),
+#'   \code{"Y"} (yearly). Default is all. Case insensitive.
+#' @param language Language for \code{group} and \code{description} matching:
+#'   \code{"en"} (default), \code{"de"}, \code{"fr"}, or \code{"it"}.
+#' @param meta_data A \code{met_metadata} object or list thereof. Defaults to
+#'   the package dataset \code{\link[idaweb]{metadata}}.
+#' @param drop_nodata Logical. Should collections with no matching data be
+#'   dropped from the result? Default is \code{TRUE}.
+#'
+#' @return A \code{met_metadata} object, or a named list of such objects if
+#'   \code{meta_data} was a list.
+#'
+#' @details
+#' The search is performed in three consecutive steps:
+#' \enumerate{
+#'   \item Location filtering (\code{lon}, \code{lat}, \code{alt}, \code{abbr},
+#'     \code{name}, \code{canton}).
+#'   \item Parameter filtering (\code{shortname}, \code{unit}, \code{group},
+#'     \code{description}, \code{granularity}, \code{language}).
+#'   \item Date/time filtering (\code{from}, \code{to}, \code{tz}).
+#' }
+#' At each step the result is passed to the next filter, allowing very
+#' specific queries.
+#'
+#' Swiss coordinates (LV03 / LV95) are automatically detected and converted
+#' to WGS84 using the \pkg{sf} package when needed.
+#'
+#' @seealso \code{\link{search_by_location}}, \code{\link{search_by_parameter}},
+#'   \code{\link{search_by_datetime}}
+#'
 #' @examples
-#'  \dontrun{
-#'  require(idaweb)
-#'  # search for wind data
-#'  meta_wind <- met_search('01.01.2025 to 04.02.2026', lon = '7.4..7.5', 
-#'      lat = '46.9..47.3', granularity = c('d', 'm'), group = 'wind')
-#'  # etc.
-#'  }
+#' \dontrun{
+#' # Daily averages of air temperature at Zollikofen
+#' mtemp <- met_search(
+#'   from = "12.08.2014 to 02.02.2026",
+#'   granularity = "D",
+#'   lon = "7.43..7.49", lat = "46.96..47.12",
+#'   group = "Temperature"
+#' )
+#' 
+#' # Further subset: 2 m mean air temperature
+#' mfinal <- met_search(
+#'   description = "2mmean",
+#'   meta_data = mtemp
+#' )
+#'
+#' # Wind data in central Switzerland, daily & monthly
+#' mwind <- met_search(
+#'   from = "01.01.2025", to = "04.02.2026",
+#'   lon = "7.4..7.5", lat = "46.9..47.3",
+#'   granularity = c("D", "M"), group = "wind"
+#' )
+#'
+#' # Exact station and parameter
+#' mexact <- met_search(abbr = "BER", shortname = "tre200s0")
+#' }
 #' @export
 met_search <- function(
     # by datetime
     from, to, tz = get_tzone(from, to), 
-    # by location
+    # by location TODO: change name to station? or station_name and allow short form (->match.args())
     lon, lat, alt, abbr, name, canton,
-    # by parameter
+    # by parameter TODO: change shortname to parameter? or parameter_name and allow short form?
     shortname, unit, group, description, 
     granularity = c('T', 'H', 'D', 'M', 'Y'), 
     language = c('en', 'de', 'fr', 'it'), 
