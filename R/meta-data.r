@@ -159,15 +159,31 @@ stations <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols
     out
 }
 
-#' Access Meta Data Inventory Info
+#' Access Meta Data - Inventory Info
 #'
-#' TODO
+#' Accessor function to extract the data inventory table from a
+#' \code{met_metadata} object (or a list of such objects). The inventory
+#' describes which station-parameter combinations are available and their
+#' temporal coverage.
 #'
-#' @param meta_data \code{met_metadata}. TODO
-#' @param as_dt logical. Default \code{FALSE}. TODO
-#' @param cols character vector. Default \code{NULL}. TODO
-#' @param uniq logical. Default \code{!is.null(cols)}. TODO
-#' @return object of class \code{met_datainventory}. TODO
+#' @param meta_data An object of class \code{met_metadata}, or a list of
+#'   \code{met_metadata} objects.
+#' @param as_dt Logical. Should the result be returned as a
+#'   \code{data.table}? Default is \code{FALSE}.
+#' @param cols Character vector of column names to retain. If \code{NULL}
+#'   (default), all columns are returned.
+#' @param uniq Logical. Should duplicate rows be removed? Defaults to
+#'   \code{!is.null(cols)}.
+#'
+#' @return A \code{data.frame} (or \code{data.table} if \code{as_dt = TRUE})
+#'   of class \code{met_datainventory}, or a list when \code{meta_data} is a
+#'   list.
+#'
+#' @examples
+#' \dontrun{
+#' meta <- met_search(from = "01.01.2020", to = "31.12.2020", group = "temperature")
+#' datainventory(meta)
+#' }
 #' @export
 datainventory <- function(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols)) {
     if (inherits(meta_data, 'met_metadata')) {
