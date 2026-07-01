@@ -1,13 +1,16 @@
 Package: idaweb
 Type: Package
-Title: idaweb - Access Ground-baseed Measurements provided by MeteoSwiss
+Title: idaweb - Access Ground-Based Measurements provided by MeteoSwiss
 Version: 0.1-0
 Date: 2026-01-22
 Author: Christoph Haeni
 Maintainer: Christoph Haeni <christoph.haeni@bfh.ch>
 Description: This package simplifies searching for and downloading ground-based measurements provided by MeteoSwiss through the Open Data API
 License: GPL-2
-Depends: data.table, lubridate
-Imports: httr
+Depends: R (>= 3.5.0), data.table, lubridate
+Imports: httr, openssl
+Suggests: ibts, sf
 LazyData: true
 RoxygenNote: 7.3.3
+#URL: https://github.com/ChHaeni/idaweb
+#BugReports: https://github.com/ChHaeni/idaweb/issues
