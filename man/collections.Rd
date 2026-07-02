@@ -2,16 +2,37 @@
 % Please edit documentation in R/meta-data.r
 \name{collections}
 \alias{collections}
-\title{Fetch MeteoSwiss Open Data Collections (Ground-based) Measurements}
+\title{Fetch MeteoSwiss Open Data Collections of Ground-based Measurements}
 \usage{
 collections(set_name = NULL)
 }
 \arguments{
-\item{set_name}{character. TODO}
+\item{set_name}{A character vector of collection short names (e.g.
+\code{"smn"}). If \code{NULL} (the default), all ground-based 
+collections available through this package are queried.}
 }
 \value{
-object of class \code{met_collections}. TODO
+An object of class \code{met_collections}: a character vector of
+  collection IDs with a \code{collections} attribute containing the raw
+  API responses.
 }
 \description{
-TODO
+Retrieves metadata for the most of the available ground-based measurement 
+Open Data collections exposed via the MeteoSwiss STAC API.
+}
+\details{
+The default collections are: \code{smn}, \code{smn-precip},
+  \code{smn-tower}, \code{nime}, \code{tot}, \code{pollen}, \code{obs},
+  and \code{phenology}.
+}
+\examples{
+\dontrun{
+# get all collections and print to console for a quick overview
+cols <- collections()
+print(cols)
+# automatic weather stations
+cols <- collections("smn")
+# automatic weather stations and manual precipitation stations
+cols <- collections(c("smn", "nime"))
+}
 }

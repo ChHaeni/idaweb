@@ -2,22 +2,37 @@
 % Please edit documentation in R/meta-data.r
 \name{datainventory}
 \alias{datainventory}
-\title{Access Meta Data Inventory Info}
+\title{Access Meta Data - Inventory Info}
 \usage{
 datainventory(meta_data, as_dt = FALSE, cols = NULL, uniq = !is.null(cols))
 }
 \arguments{
-\item{meta_data}{\code{met_metadata}. TODO}
+\item{meta_data}{An object of class \code{met_metadata}, or a list of
+\code{met_metadata} objects.}
 
-\item{as_dt}{logical. Default \code{FALSE}. TODO}
+\item{as_dt}{Logical. Should the result be returned as a
+\code{data.table}? Default is \code{FALSE}.}
 
-\item{cols}{character vector. Default \code{NULL}. TODO}
+\item{cols}{Character vector of column names to retain. If \code{NULL}
+(default), all columns are returned.}
 
-\item{uniq}{logical. Default \code{!is.null(cols)}. TODO}
+\item{uniq}{Logical. Should duplicate rows be removed? Defaults to
+\code{!is.null(cols)}.}
 }
 \value{
-object of class \code{met_datainventory}. TODO
+A \code{data.frame} (or \code{data.table} if \code{as_dt = TRUE})
+  of class \code{met_datainventory}, or a list when \code{meta_data} is a
+  list.
 }
 \description{
-TODO
+Accessor function to extract the data inventory table from a
+\code{met_metadata} object (or a list of such objects). The inventory
+describes which station-parameter combinations are available and their
+temporal coverage.
+}
+\examples{
+\dontrun{
+meta <- met_search(from = "01.01.2020", to = "31.12.2020", group = "temperature")
+datainventory(meta)
+}
 }
