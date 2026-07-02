@@ -1,0 +1,236 @@
+---
+title: 'Introduction to idaweb'
+author: 'Christoph Haeni'
+date: '`r Sys.Date()`'
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to idaweb}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = '#>'
+)
+```
+
+## Overview
+
+The **idaweb** package provides a programmatic interface to the
+[MeteoSwiss Open Data API](https://opendatadocs.meteoswiss.ch/a-data-groundbased)
+for ground-based meteorological measurements. It replaces the legacy
+*IdaWeb* web mask, allowing you to search for stations, parameters, and
+time ranges, and then download the actual data directly into R.
+
+The package is designed for a **three-stage workflow**:
+
+1. **Search** for the data you need with `met_search()`.
+2. **Inspect** the resulting metadata with `parameters()`, `stations()`,
+   and `datainventory()`.
+3. **Download** the data with `get_data()`.
+
+All data files are downloaded once and cached locally, so repeated
+analyses are fast.
+
+## Installation
+
+```r
+# install.packages('remotes')
+remotes::install_github('ChHaeni/idaweb')
+```
+
+## Built-in metadata
+
+The package ships with a pre-packaged metadata catalogue (`metadata`)
+covering all standard ground-based collections:
+
+| Collection | Content |
+|------------|---------|
+| `smn` | Swiss National Meteorological Network (SMN) |
+| `smn-precip` | SMN precipitation stations |
+| `smn-tower` | SMN tower stations |
+| `nime` | Manual precipitation and snow measurements |
+| `tot` | Totaliser precipitation stations |
+| `pollen` | Pollen measurements |
+| `obs` | Observations from partner networks |
+| `phenology` | Phenological observations |
+
+You can inspect the metadata directly:
+
+```r
+library(idaweb)
+
+# See all collections
+metadata
+names(metadata)
+
+# Access tables
+stations(metadata)
+parameters(metadata)
+datainventory(metadata)
+```
+
+## Example 1: Daily Air Temperature at Zollikofen
+
+This example reproduces the workflow from the package README: find daily
+air temperature averages for the station in Zollikofen, then narrow down
+to the 2 m mean temperature parameter.
+
+```r
+# Step 1: broad search
+mtemp <- met_search(
+  from = '12.08.2014 to 02.02.2026',
+  granularity = 'D',
+  lon = '7.43..7.49',
+  lat = '46.96..47.12',
+  group = 'Temperature'
+)
+
+# Inspect the result
+mtemp
+parameters(mtemp)
+
+# Check parameter descriptions to find the right one
+parameters(mtemp[[1]])[, 'parameter_description_en']
+
+# Step 2: narrow down to 2 m mean temperature
+mfinal <- met_search(
+  description = '2mmean',
+  meta_data = mtemp
+)
+
+# Verify
+parameters(mfinal)
+
+# Step 3: download
+zol_temp <- get_data(
+  meta_data = mfinal,
+  outclass = 'data.table'
+)
+
+# The result is a nested list (collection -> station/granularity)
+# Access the first time series
+zol_temp[[1]][[1]]
+```
+
+## Example 2: Wind Speed in the Canton of Jura
+
+```r
+# 10-minute wind data on a specific day
+meta_jura <- met_search(
+  from = '12.08.2014',
+  to = '12.08.2014',
+  canton = 'JU',
+  granularity = 'T',
+  group = 'wind'
+)
+
+# Download
+wind_jura <- get_data(meta_jura, outclass = 'data.table')
+```
+
+## Example 3: Yearly Precipitation in Adelboden
+
+```r
+# Yearly precipitation totals
+meta_adelb <- met_search(
+  from = '1999',
+  to = '2025',
+  abbr = 'ADEL',
+  granularity = 'Y',
+  group = 'precipitation'
+)
+
+# Download and combine into one object
+adel_precip <- get_data(
+  meta_adelb[[1]],
+  outstruc = 'cbind-all',
+  outclass = 'data.table'
+)
+```
+
+## Searching in detail
+
+### By location
+
+You can filter by coordinates, altitude, station abbreviation, name, or
+canton:
+
+```r
+# Coordinate box (WGS84)
+meta <- met_search(lon = '7.4..7.5', lat = '46.9..47.3')
+
+# Exact station
+meta <- met_search(abbr = 'BER')
+
+# Fuzzy name matching
+meta <- met_search(name = 'Zurich')
+
+# Canton
+meta <- met_search(canton = 'BE')
+```
+
+Swiss coordinates (LV03 / LV95) are accepted as well and are
+automatically converted to WGS84 if the **sf** package is installed.
+
+### By parameter
+
+```r
+# Temperature and precipitation at daily resolution
+meta <- met_search(
+  group = c('temperature', 'precipitation'),
+  granularity = 'D'
+)
+
+# By exact parameter short name
+meta <- met_search(shortname = 'tre200s0')
+
+# By description (fuzzy)
+meta <- met_search(description = '2mmean')
+```
+
+### By date and time
+
+```r
+# Many date formats are accepted
+meta <- met_search(from = '01.01.2020', to = '31.12.2020')
+meta <- met_search(from = '2020-01-01', to = '2020-12-31')
+meta <- met_search(from = '2020')
+```
+
+## Downloading data
+
+`get_data()` turns a `met_metadata` object into actual observations.
+
+### Output options
+
+- `outclass`: `data.frame` (default), `data.table`, or `ibts`
+- `outstruc`: `split-all` (default), `by-station`, `by-granularity`, or `cbind-all`
+- `single_timestamp`: `TRUE` gives a single `time` column; `FALSE` gives `st`/`et`
+- `tzone`: Convert timestamps from UTC to another timezone
+
+### Caching
+
+By default, files are cached in `tempdir()`. For persistence across R
+sessions, specify a dedicated directory:
+
+```r
+dat <- get_data(meta, cache_dir = 'C:/meteoswiss_cache')
+```
+
+## Inspecting results
+
+Every returned data object carries metadata attributes:
+
+```r
+dat <- get_data(meta, outstruc = 'cbind-all')
+attr(dat, 'stations')
+attr(dat, 'parameters')
+```
+
+## References
+
+- [MeteoSwiss Open Data – Ground-based measurements](https://opendatadocs.meteoswiss.ch/a-data-groundbased)
+- [MeteoSwiss Open Data download documentation](https://opendatadocs.meteoswiss.ch/general/download)

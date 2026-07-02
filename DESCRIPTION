@@ -9,7 +9,7 @@ Description: This package simplifies searching for and downloading ground-based 
 License: GPL-2
 Depends: R (>= 3.5.0), data.table, lubridate
 Imports: httr, openssl
-Suggests: ibts, sf
+Suggests: ibts, sf, knitr, rmarkdown
 LazyData: true
 RoxygenNote: 7.3.3
 #URL: https://github.com/ChHaeni/idaweb
