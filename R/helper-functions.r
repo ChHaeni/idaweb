@@ -1,8 +1,44 @@
 
 ## fuzzy search (exported) ----------------------------------------
 
-# "fuzzy" searching strings
-# use equal sign for non-fuzzy search, e.g. '=Zollik'
+#' Fuzzy String Search
+#'
+#' Performs fuzzy matching of a pattern against a character vector. By
+#' default, the pattern is split into individual characters and joined with
+#' \code{.*} wildcards, allowing partial and out-of-order matches. Prefix the
+#' pattern with \code{=} to enforce exact matching.
+#'
+#' @param pattern A character string to search for.
+#' @param string A character vector to search within.
+#' @param value Logical. If \code{TRUE}, returns the matching values instead
+#'   of indices.
+#' @param return_logical Logical. If \code{TRUE}, returns a logical vector
+#'   instead of indices.
+#' @param ignore.case Logical. Should the search be case-insensitive?
+#'   Default is \code{TRUE} unless the pattern contains uppercase letters.
+#'
+#' @return Integer indices, character values, or a logical vector depending
+#'   on the arguments.
+#'
+#' @details
+#' The function is used internally for station name and parameter
+#' description matching. For example, \code{fuzzy_search("temp", c("air
+#' temperature", "precipitation"))} will match \code{"air temperature"}.
+#'
+#' @examples
+#' \dontrun{
+#' fuzzy + case ignored
+#' fuzzy_search("zol", c("Zollikofen", "zollikon", "Zürich Oberland", "Pizol"))
+#' fuzzy + case sensitive
+#' fuzzy_search("Zol", c("Zollikofen", "zollikon", "Zürich Oberland", "Pizol"))
+#' fuzzy + case sensitive
+#' fuzzy_search("ZOl", c("Zollikofen", "zollikon", "Zürich Oberland", "Pizol"))
+#' exact + case ignored
+#' fuzzy_search("=zol", c("Zollikofen", "zollikon", "Zürich Oberland", "Pizol"))
+#' exact + case ignored
+#' fuzzy_search("=^zol", c("Zollikofen", "zollikon", "Zürich Oberland", "Pizol"))
+#' }
+#' @export
 fuzzy_search <- function(pattern, string, value = FALSE, return_logical = FALSE,
     ignore.case = all(is.na(pmatch(LETTERS, pattern)))) {
     # check for non-fuzzy search
