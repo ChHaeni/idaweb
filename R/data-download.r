@@ -11,7 +11,7 @@
 #' @param meta_data A \code{met_metadata} object (or a list of such objects)
 #'   describing the data to be downloaded.
 #' @param cache_dir Path to the local cache directory. Default is the temporary
-#'   directory \code{\link[base]{tempdir()}.
+#'   directory \code{\link[base]{tempdir}()}.
 #' @param single_timestamp Logical. If \code{TRUE} (default), a single
 #'   \code{time} column is returned. If \code{FALSE}, the interval is
 #'   represented by \code{st} (start) and \code{et} (end) columns.
