@@ -1,5 +1,9 @@
 
-# print method for collections
+#' Print MeteoSwiss Collections
+#'
+#' @param x An object of class \code{met_collections}.
+#' @param ... Not used.
+#' @export
 print.met_collections <- function(x, ...) {
     # get titles
     titles <- sapply(attr(x, 'collections'), '[[', 'title')
@@ -18,7 +22,11 @@ print.met_collections <- function(x, ...) {
     invisible()
 }
 
-# print methods for meta data
+#' Print MeteoSwiss Assets
+#'
+#' @param x An object of class \code{met_assets}.
+#' @param ... Not used.
+#' @export
 print.met_assets <- function(x, ...) {
     ncs <- nchar(nms <- names(x))
     names(ncs) <- nms
@@ -30,6 +38,11 @@ print.met_assets <- function(x, ...) {
     invisible()
 }
 
+#' Print Data Inventory
+#'
+#' @param x An object of class \code{met_datainventory}.
+#' @param ... Further arguments passed to \code{print_dense}.
+#' @export
 print.met_datainventory <- function(x, ...) {
     cat('-- datainventory --\n')
     cat('Number of data:', length(x[[1]]), '\n')
@@ -38,12 +51,23 @@ print.met_datainventory <- function(x, ...) {
     print_dense(x, ...)
 }
 
+#' Print Station Metadata
+#'
+#' @param x An object of class \code{met_stations}.
+#' @param ... Further arguments passed to \code{print_dense}.
+#' @export
 print.met_stations <- function(x, ...) {
     cat('-- stations --\n')
     cat('Number of stations:', length(x[[1]]), '\n')
     print_dense(x, ...)
 }
 
+
+#' Print Parameter Metadata
+#'
+#' @param x An object of class \code{met_parameters}.
+#' @param ... Further arguments passed to \code{print_dense}.
+#' @export
 print.met_parameters <- function(x, ...) {
     cat('-- parameters --\n')
     cat('Number of parameters:', length(x[[1]]), '\n')
@@ -51,6 +75,11 @@ print.met_parameters <- function(x, ...) {
     print_dense(x, ...)
 }
 
+#' Print MeteoSwiss Metadata
+#'
+#' @param x An object of class \code{met_metadata}.
+#' @param ... Not used.
+#' @export
 print.met_metadata <- function(x, ...) {
     # shorten parameter groups
     groups <- paste(ug <- unique(x[['parameters']][['parameter_group_en']]), collapse = ';')
