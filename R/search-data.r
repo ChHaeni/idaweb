@@ -15,10 +15,10 @@
 #'   \code{POSIXt} object. If omitted, an open-ended interval is assumed.
 #' @param tz Time zone for \code{from} and \code{to}. Default is inferred
 #'   from the inputs or falls back to \code{"UTC"}.
-#' @param lon Longitudinal range. Accepts WGS84 (approx. 5\u00B0–11\u00B0) or Swiss
+#' @param lon Longitudinal range. Accepts WGS84 (approx. 5°–11°) or Swiss
 #'   coordinate values. Ranges can be given as \code{"7.4..7.5"},
 #'   \code{"7.4 to 7.5"}, or a numeric vector \code{c(7.4, 7.5)}.
-#' @param lat Latitudinal range. Accepts WGS84 (approx. 45\u00B0–48\u00B0) or Swiss
+#' @param lat Latitudinal range. Accepts WGS84 (approx. 45°–48°) or Swiss
 #'   coordinate values (see \code{lon}).
 #' @param alt Altitude range in metres a.s.l. Same range format as \code{lon}/\code{lat}
 #'   or a numeric vector. Use \code{-Inf}/\code{Inf} for either side open limit.

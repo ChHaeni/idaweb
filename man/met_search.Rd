@@ -35,11 +35,11 @@ met_search(
 \item{tz}{Time zone for \code{from} and \code{to}. Default is inferred
 from the inputs or falls back to \code{"UTC"}.}
 
-\item{lon}{Longitudinal range. Accepts WGS84 (approx. 5\u00B0–11\u00B0) or Swiss
+\item{lon}{Longitudinal range. Accepts WGS84 (approx. 5°–11°) or Swiss
 coordinate values. Ranges can be given as \code{"7.4..7.5"},
 \code{"7.4 to 7.5"}, or a numeric vector \code{c(7.4, 7.5)}.}
 
-\item{lat}{Latitudinal range. Accepts WGS84 (approx. 45\u00B0–48\u00B0) or Swiss
+\item{lat}{Latitudinal range. Accepts WGS84 (approx. 45°–48°) or Swiss
 coordinate values (see \code{lon}).}
 
 \item{alt}{Altitude range in metres a.s.l. Same range format as \code{lon}/\code{lat}
