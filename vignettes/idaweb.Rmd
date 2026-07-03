@@ -46,16 +46,16 @@ remotes::install_github('ChHaeni/idaweb')
 The package ships with a pre-packaged metadata catalogue (`metadata`)
 covering all standard ground-based collections:
 
-| Collection | Content |
-|------------|---------|
-| `smn` | Swiss National Meteorological Network (SMN) |
-| `smn-precip` | SMN precipitation stations |
-| `smn-tower` | SMN tower stations |
-| `nime` | Manual precipitation and snow measurements |
-| `tot` | Totaliser precipitation stations |
-| `pollen` | Pollen measurements |
-| `obs` | Observations from partner networks |
-| `phenology` | Phenological observations |
+| Collection | Short Name | Content |
+|------------|------------|---------|
+| Automatic weather stations | `smn` | Temperature, Precipitation, Wind, Sunshine, Humidity, Radiation and Pressure |
+| Automatic precipitation stations | `smn-precip` | Precipitation |
+| Automatic tower stations | `smn-tower` | Temperature, Wind, Sunshine, Humidity and Radiation |
+| Manual precipitation stations | `nime` | Precipitation and Snow |
+| Totaliser precipitation stations | `tot` | Precipitation |
+| Pollen stations | `pollen` | Pollen Concentration |
+| Meteorological visual observations | `obs` | Visibility, Current and Past Weather, Ground Conditions and Clouds |
+| Phenological observations | `phenology` | Phenophases of 26 Plant Species |
 
 You can inspect the metadata directly:
 
@@ -217,6 +217,7 @@ By default, files are cached in `tempdir()`. For persistence across R
 sessions, specify a dedicated directory:
 
 ```r
+meta <- met_search(from = '2020', shortname = 'tre200s0', name = 'Zol')
 dat <- get_data(meta, cache_dir = 'C:/meteoswiss_cache')
 ```
 
@@ -225,12 +226,14 @@ dat <- get_data(meta, cache_dir = 'C:/meteoswiss_cache')
 Every returned data object carries metadata attributes:
 
 ```r
-dat <- get_data(meta, outstruc = 'cbind-all')
+meta <- met_search(from = '2020', shortname = 'tre200s0', name = 'Zol')
+dat <- get_data(meta, outstruc = "cbind-all")
 stations(dat)
+# -> (station) name has been fuzzy matched |Z||o||l|likofen and |Z|ürich Aff|o||l|tern
 parameters(dat)
 ```
 
 ## References
 
 - [MeteoSwiss Open Data – Ground-based measurements](https://opendatadocs.meteoswiss.ch/a-data-groundbased)
-- [MeteoSwiss Open Data download documentation](https://opendatadocs.meteoswiss.ch/general/download)
+- [MeteoSwiss Open Data – Data download documentation](https://opendatadocs.meteoswiss.ch/general/download)
