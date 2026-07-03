@@ -575,8 +575,8 @@ persistence across R sessions, specify a dedicated directory:</p>
 <h2>Inspecting results</h2>
 <p>Every returned data object carries metadata attributes:</p>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">get_data</span>(meta, <span class="at">outstruc =</span> <span class="st">&#39;cbind-all&#39;</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">attr</span>(dat, <span class="st">&#39;stations&#39;</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">attr</span>(dat, <span class="st">&#39;parameters&#39;</span>)</span></code></pre></div>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">stations</span>(dat)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">parameters</span>(dat)</span></code></pre></div>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>

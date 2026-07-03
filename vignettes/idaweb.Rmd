@@ -226,8 +226,8 @@ Every returned data object carries metadata attributes:
 
 ```r
 dat <- get_data(meta, outstruc = 'cbind-all')
-attr(dat, 'stations')
-attr(dat, 'parameters')
+stations(dat)
+parameters(dat)
 ```
 
 ## References
