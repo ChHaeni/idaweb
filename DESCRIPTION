@@ -1,7 +1,7 @@
 Package: idaweb
 Type: Package
 Title: idaweb - Access Ground-Based Measurements provided by MeteoSwiss
-Version: 0.2-0
+Version: 0.2-1
 Date: 2026-07-03
 Author: Christoph Haeni
 Maintainer: Christoph Haeni <christoph.haeni@bfh.ch>
