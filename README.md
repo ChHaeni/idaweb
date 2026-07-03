@@ -34,18 +34,19 @@ For compiled versions or a specific release, see the [latest GitHub releases](ht
 
 ### Built-in metadata
 
-**idaweb** ships with a pre-packaged metadata catalogue (`metadata`) covering all standard ground-based collections:
+**idaweb** ships with a pre-packaged metadata catalogue (`metadata`) covering 
+all standard ground-based collections:
 
-| Collection | Content |
-|------------|---------|
-| `smn` | Swiss National Meteorological Network (SMN) |
-| `smn-precip` | SMN precipitation stations |
-| `smn-tower` | SMN tower stations |
-| `nime` | Manual precipitation and snow measurements |
-| `tot` | Totaliser precipitation stations |
-| `pollen` | Pollen measurements |
-| `obs` | Observations from partner networks |
-| `phenology` | Phenological observations |
+| Collection | Short Name | Content |
+|------------|------------|---------|
+| Automatic weather stations | `smn` | Temperature, Precipitation, Wind, Sunshine, Humidity, Radiation and Pressure |
+| Automatic precipitation stations | `smn-precip` | Precipitation |
+| Automatic tower stations | `smn-tower` | Temperature, Wind, Sunshine, Humidity and Radiation |
+| Manual precipitation stations | `nime` | Precipitation and Snow |
+| Totaliser precipitation stations | `tot` | Precipitation |
+| Pollen stations | `pollen` | Pollen Concentration |
+| Meteorological visual observations | `obs` | Visibility, Current and Past Weather, Ground Conditions and Clouds |
+| Phenological observations | `phenology` | Phenophases of 26 Plant Species |
 
 You can inspect the metadata directly:
 
