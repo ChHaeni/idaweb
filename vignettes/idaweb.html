@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Christoph Haeni" />
+
+<meta name="date" content="2026-07-03" />
+
+<title>Introduction to idaweb</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to idaweb</h1>
+<h4 class="author">Christoph Haeni</h4>
+<h4 class="date">2026-07-03</h4>
+
+
+
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>The <strong>idaweb</strong> package provides a programmatic interface
+to the <a href="https://opendatadocs.meteoswiss.ch/a-data-groundbased">MeteoSwiss
+Open Data API</a> for ground-based meteorological measurements. It
+replaces the legacy <em>IdaWeb</em> web mask, allowing you to search for
+stations, parameters, and time ranges, and then download the actual data
+directly into R.</p>
+<p>The package is designed for a <strong>three-stage
+workflow</strong>:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Search</strong> for the data you need with
+<code>met_search()</code>.</li>
+<li><strong>Inspect</strong> the resulting metadata with
+<code>parameters()</code>, <code>stations()</code>, and
+<code>datainventory()</code>.</li>
+<li><strong>Download</strong> the data with
+<code>get_data()</code>.</li>
+</ol>
+<p>All data files are downloaded once and cached locally, so repeated
+analyses are fast.</p>
+</div>
+<div id="installation" class="section level2">
+<h2>Installation</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co"># install.packages(&#39;remotes&#39;)</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&#39;ChHaeni/idaweb&#39;</span>)</span></code></pre></div>
+</div>
+<div id="built-in-metadata" class="section level2">
+<h2>Built-in metadata</h2>
+<p>The package ships with a pre-packaged metadata catalogue
+(<code>metadata</code>) covering all standard ground-based
+collections:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Collection</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>smn</code></td>
+<td>Swiss National Meteorological Network (SMN)</td>
+</tr>
+<tr class="even">
+<td><code>smn-precip</code></td>
+<td>SMN precipitation stations</td>
+</tr>
+<tr class="odd">
+<td><code>smn-tower</code></td>
+<td>SMN tower stations</td>
+</tr>
+<tr class="even">
+<td><code>nime</code></td>
+<td>Manual precipitation and snow measurements</td>
+</tr>
+<tr class="odd">
+<td><code>tot</code></td>
+<td>Totaliser precipitation stations</td>
+</tr>
+<tr class="even">
+<td><code>pollen</code></td>
+<td>Pollen measurements</td>
+</tr>
+<tr class="odd">
+<td><code>obs</code></td>
+<td>Observations from partner networks</td>
+</tr>
+<tr class="even">
+<td><code>phenology</code></td>
+<td>Phenological observations</td>
+</tr>
+</tbody>
+</table>
+<p>You can inspect the metadata directly:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">library</span>(idaweb)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co"># See all collections</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>metadata</span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="fu">names</span>(metadata)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co"># Access tables</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="fu">stations</span>(metadata)</span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="fu">parameters</span>(metadata)</span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="fu">datainventory</span>(metadata)</span></code></pre></div>
+</div>
+<div id="example-1-daily-air-temperature-at-zollikofen" class="section level2">
+<h2>Example 1: Daily Air Temperature at Zollikofen</h2>
+<p>This example reproduces the workflow from the package README: find
+daily air temperature averages for the station in Zollikofen, then
+narrow down to the 2 m mean temperature parameter.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># Step 1: broad search</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>mtemp <span class="ot">&lt;-</span> <span class="fu">met_search</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">from =</span> <span class="st">&#39;12.08.2014 to 02.02.2026&#39;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">granularity =</span> <span class="st">&#39;D&#39;</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">lon =</span> <span class="st">&#39;7.43..7.49&#39;</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">lat =</span> <span class="st">&#39;46.96..47.12&#39;</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">group =</span> <span class="st">&#39;Temperature&#39;</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>)</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co"># Inspect the result</span></span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>mtemp</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a><span class="fu">parameters</span>(mtemp)</span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a><span class="co"># Check parameter descriptions to find the right one</span></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="fu">parameters</span>(mtemp[[<span class="dv">1</span>]])[, <span class="st">&#39;parameter_description_en&#39;</span>]</span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a></span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a><span class="co"># Step 2: narrow down to 2 m mean temperature</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>mfinal <span class="ot">&lt;-</span> <span class="fu">met_search</span>(</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>  <span class="at">description =</span> <span class="st">&#39;2mmean&#39;</span>,</span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a>  <span class="at">meta_data =</span> mtemp</span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>)</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a><span class="co"># Verify</span></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a><span class="fu">parameters</span>(mfinal)</span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a></span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="co"># Step 3: download</span></span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>zol_temp <span class="ot">&lt;-</span> <span class="fu">get_data</span>(</span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>  <span class="at">meta_data =</span> mfinal,</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>  <span class="at">outclass =</span> <span class="st">&#39;data.table&#39;</span></span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>)</span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a><span class="co"># The result is a nested list (collection -&gt; station/granularity)</span></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a><span class="co"># Access the first time series</span></span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a>zol_temp[[<span class="dv">1</span>]][[<span class="dv">1</span>]]</span></code></pre></div>
+</div>
+<div id="example-2-wind-speed-in-the-canton-of-jura" class="section level2">
+<h2>Example 2: Wind Speed in the Canton of Jura</h2>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co"># 10-minute wind data on a specific day</span></span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>meta_jura <span class="ot">&lt;-</span> <span class="fu">met_search</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">from =</span> <span class="st">&#39;12.08.2014&#39;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">to =</span> <span class="st">&#39;12.08.2014&#39;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">canton =</span> <span class="st">&#39;JU&#39;</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">granularity =</span> <span class="st">&#39;T&#39;</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>  <span class="at">group =</span> <span class="st">&#39;wind&#39;</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a>)</span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co"># Download</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a>wind_jura <span class="ot">&lt;-</span> <span class="fu">get_data</span>(meta_jura, <span class="at">outclass =</span> <span class="st">&#39;data.table&#39;</span>)</span></code></pre></div>
+</div>
+<div id="example-3-yearly-precipitation-in-adelboden" class="section level2">
+<h2>Example 3: Yearly Precipitation in Adelboden</h2>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="co"># Yearly precipitation totals</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>meta_adelb <span class="ot">&lt;-</span> <span class="fu">met_search</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">from =</span> <span class="st">&#39;1999&#39;</span>,</span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="at">to =</span> <span class="st">&#39;2025&#39;</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>  <span class="at">abbr =</span> <span class="st">&#39;ADEL&#39;</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>  <span class="at">granularity =</span> <span class="st">&#39;Y&#39;</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>  <span class="at">group =</span> <span class="st">&#39;precipitation&#39;</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a>)</span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co"># Download and combine into one object</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a>adel_precip <span class="ot">&lt;-</span> <span class="fu">get_data</span>(</span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a>  meta_adelb[[<span class="dv">1</span>]],</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="at">outstruc =</span> <span class="st">&#39;cbind-all&#39;</span>,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="at">outclass =</span> <span class="st">&#39;data.table&#39;</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="searching-in-detail" class="section level2">
+<h2>Searching in detail</h2>
+<div id="by-location" class="section level3">
+<h3>By location</h3>
+<p>You can filter by coordinates, altitude, station abbreviation, name,
+or canton:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Coordinate box (WGS84)</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">lon =</span> <span class="st">&#39;7.4..7.5&#39;</span>, <span class="at">lat =</span> <span class="st">&#39;46.9..47.3&#39;</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co"># Exact station</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">abbr =</span> <span class="st">&#39;BER&#39;</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co"># Fuzzy name matching</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">name =</span> <span class="st">&#39;Zurich&#39;</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co"># Canton</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">canton =</span> <span class="st">&#39;BE&#39;</span>)</span></code></pre></div>
+<p>Swiss coordinates (LV03 / LV95) are accepted as well and are
+automatically converted to WGS84 if the <strong>sf</strong> package is
+installed.</p>
+</div>
+<div id="by-parameter" class="section level3">
+<h3>By parameter</h3>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="co"># Temperature and precipitation at daily resolution</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">group =</span> <span class="fu">c</span>(<span class="st">&#39;temperature&#39;</span>, <span class="st">&#39;precipitation&#39;</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">granularity =</span> <span class="st">&#39;D&#39;</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>)</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co"># By exact parameter short name</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">shortname =</span> <span class="st">&#39;tre200s0&#39;</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co"># By description (fuzzy)</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">description =</span> <span class="st">&#39;2mmean&#39;</span>)</span></code></pre></div>
+</div>
+<div id="by-date-and-time" class="section level3">
+<h3>By date and time</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># Many date formats are accepted</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">from =</span> <span class="st">&#39;01.01.2020&#39;</span>, <span class="at">to =</span> <span class="st">&#39;31.12.2020&#39;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">from =</span> <span class="st">&#39;2020-01-01&#39;</span>, <span class="at">to =</span> <span class="st">&#39;2020-12-31&#39;</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>meta <span class="ot">&lt;-</span> <span class="fu">met_search</span>(<span class="at">from =</span> <span class="st">&#39;2020&#39;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="downloading-data" class="section level2">
+<h2>Downloading data</h2>
+<p><code>get_data()</code> turns a <code>met_metadata</code> object into
+actual observations.</p>
+<div id="output-options" class="section level3">
+<h3>Output options</h3>
+<ul>
+<li><code>outclass</code>: <code>data.frame</code> (default),
+<code>data.table</code>, or <code>ibts</code></li>
+<li><code>outstruc</code>: <code>split-all</code> (default),
+<code>by-station</code>, <code>by-granularity</code>, or
+<code>cbind-all</code></li>
+<li><code>single_timestamp</code>: <code>TRUE</code> gives a single
+<code>time</code> column; <code>FALSE</code> gives
+<code>st</code>/<code>et</code></li>
+<li><code>tzone</code>: Convert timestamps from UTC to another
+timezone</li>
+</ul>
+</div>
+<div id="caching" class="section level3">
+<h3>Caching</h3>
+<p>By default, files are cached in <code>tempdir()</code>. For
+persistence across R sessions, specify a dedicated directory:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">get_data</span>(meta, <span class="at">cache_dir =</span> <span class="st">&#39;C:/meteoswiss_cache&#39;</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="inspecting-results" class="section level2">
+<h2>Inspecting results</h2>
+<p>Every returned data object carries metadata attributes:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">get_data</span>(meta, <span class="at">outstruc =</span> <span class="st">&#39;cbind-all&#39;</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">attr</span>(dat, <span class="st">&#39;stations&#39;</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">attr</span>(dat, <span class="st">&#39;parameters&#39;</span>)</span></code></pre></div>
+</div>
+<div id="references" class="section level2">
+<h2>References</h2>
+<ul>
+<li><a href="https://opendatadocs.meteoswiss.ch/a-data-groundbased">MeteoSwiss
+Open Data – Ground-based measurements</a></li>
+<li><a href="https://opendatadocs.meteoswiss.ch/general/download">MeteoSwiss
+Open Data download documentation</a></li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
