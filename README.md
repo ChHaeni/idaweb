@@ -159,8 +159,10 @@ dat <- get_data(meta, cache_dir = "C:/meteoswiss_cache")
 Every returned data object carries metadata attributes:
 
 ```r
+meta <- met_search(from = '2020', shortname = 'tre200s0', name = 'Zol')
 dat <- get_data(meta, outstruc = "cbind-all")
 stations(dat)
+# -> (station) name has been fuzzy matched |Z||o||l|likofen and |Z|ürich Aff|o||l|tern
 parameters(dat)
 ```
 
