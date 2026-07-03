@@ -4,7 +4,8 @@
 <!-- badges: end -->
 
 **idaweb** is an R package that provides a programmatic interface to the [MeteoSwiss OpenData API](https://opendatadocs.meteoswiss.ch/a-data-groundbased) for ground-based meteorological measurements. It lets you search for stations, parameters, and time ranges, and downloads the actual data directly into R.
-NOTE: This package has been created to help short-cutting the (for my opinion rather cumbersome) way of accessing data through the Open Data Explorer provided by MeteoSwiss. So far it has been only me using it. Feel free to use it, but don't expect things to work the way you are using R (and don't expect any documentation including this README to be well-written (indeed any documentation is now AI-generated, lol)). If you like to use this package and have any improvement suggestions or feature ideas, open an issue or contribute to the package by opening a PR. I prefer _code_ which has been thoroughly thought about (even if it is ugly-looking) over quick-and-dirty-ai coolness by no measures! Any code in this package from me is (and will remain) AI-free.
+
+**NOTE:** This package has been created to help short-cutting the (for my opinion rather cumbersome) way of accessing data through the Open Data Explorer provided by MeteoSwiss. So far it has been only me using it. Feel free to use it, but don't expect things to work the way _you_ are using R (and don't expect any documentation including this README to be well-written (indeed any documentation is now AI-generated, lol)). If you like to use this package and have any improvement suggestions or feature ideas, open an issue or contribute to the package by opening a PR. I prefer _code_ which has been thoroughly thought about (even if it is ugly-looking) over quick-and-dirty-ai coolness by no measures! Any code in this package from me is (and will remain) AI-free.
 
 The package is designed around a simple three-stage workflow:
 
@@ -200,12 +201,8 @@ outclass = "data.table"
 
 ## References
 
--
-MeteoSwissOpenData–Ground−basedmeasurements
-(https://opendatadocs.meteoswiss.ch/a-data-groundbased)
--
-MeteoSwissOpenDatadownloaddocumentation
-(https://opendatadocs.meteoswiss.ch/general/download)
+- [MeteoSwiss OpenData – Ground−based measurements](https://opendatadocs.meteoswiss.ch/a-data-groundbased)
+- [MeteoSwiss OpenData download documentation](https://opendatadocs.meteoswiss.ch/general/download)
 
 ---
 
